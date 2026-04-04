@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RentFlix — Entrar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #E8B84B; --gold-dk: #C49A2A; --red: #C0392B;
+      --bg: #0A0A0F; --bg3: #18181f; --surface: #1E1E28; --surface2: #252530;
+      --text: #F0EDE6; --muted: #8A8799; --border: rgba(255,255,255,0.07);
+      --font-display: 'Playfair Display', serif; --font-body: 'DM Sans', sans-serif;
+      --radius: 10px;
+    }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font-body);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 60%, rgba(192,57,43,0.10), transparent),
+        radial-gradient(ellipse 50% 60% at 80% 30%, rgba(232,184,75,0.07), transparent);
+    }
+    .film-strip { position: fixed; top: 0; bottom: 0; width: 72px; display: flex; flex-direction: column; gap: 6px; padding: 6px; opacity: 0.05; pointer-events: none; z-index: 0; overflow: hidden; }
+    .film-strip.left { left: 0; } .film-strip.right { right: 0; }
+    .film-hole { width: 100%; aspect-ratio: 1; border-radius: 4px; border: 2px solid var(--text); flex-shrink: 0; }
+    .login-wrap { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 1.5rem; animation: fadeUp 0.45s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .login-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 18px; padding: 2.5rem 2.25rem; box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
+    .login-logo { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; color: var(--gold); text-decoration: none; margin-bottom: 2rem; }
+    .login-logo span { color: var(--text); }
+    .login-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 0.35rem; }
+    .login-subtitle { font-size: 0.85rem; color: var(--muted); text-align: center; margin-bottom: 2rem; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+    .field label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .field-wrap { position: relative; display: flex; align-items: center; }
+    .field-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: 0.9rem; padding: 0.65rem 2.5rem 0.65rem 0.9rem; outline: none; transition: border-color 0.2s; }
+    .field-wrap input:focus { border-color: var(--gold); }
+    .field-wrap input.error { border-color: var(--red); }
+    .field-wrap input::placeholder { color: var(--muted); }
+    .toggle-pw { position: absolute; right: 0.7rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 4px; transition: color 0.15s; }
+    .toggle-pw:hover { color: var(--text); }
+    .field-error { font-size: 0.73rem; color: var(--red); min-height: 15px; display: none; }
+    .field-error.visible { display: block; }
+    .lockout-msg { background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.3); border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.82rem; color: #e07060; text-align: center; margin-bottom: 1rem; display: none; }
+    .lockout-msg.visible { display: block; }
+    .btn-submit { width: 100%; padding: 0.75rem; background: var(--gold); color: #0A0A0F; border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 0.5rem; }
+    .btn-submit:hover:not(:disabled) { background: var(--gold-dk); transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(10,10,15,0.3); border-top-color: #0A0A0F; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+    .btn-submit.loading .btn-spinner { display: block; }
+    .btn-submit.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .attempts-hint { text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 0.6rem; min-height: 18px; }
+    .attempts-hint.warn { color: #e07060; }
+    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.82rem; color: var(--muted); }
+    .login-footer a { color: var(--gold); text-decoration: none; font-weight: 500; }
+    .login-footer a:hover { text-decoration: underline; }
+    .divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; color: var(--muted); font-size: 0.75rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="film-strip left">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+  <div class="film-strip right">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <a href="index.html" class="login-logo">🎬 <span>Rent</span>Flix</a>
+      <h1 class="login-title">Bem-vindo de volta</h1>
+      <p class="login-subtitle">Entre na sua conta para continuar</p>
+
+      <div class="lockout-msg" id="lockout-msg"></div>
+
+      <div class="field">
+        <label for="login-field">Login ou E-mail</label>
+        <div class="field-wrap">
+          <input type="text" id="login-field" placeholder="seu_login ou email@exemplo.com" autocomplete="username" maxlength="254" />
+        </div>
+        <span class="field-error" id="err-login"></span>
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <div class="field-wrap">
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" maxlength="128" />
+          <button class="toggle-pw" id="toggle-pw" type="button" aria-label="Mostrar senha">👁</button>
+        </div>
+        <span class="field-error" id="err-pw"></span>
+      </div>
+
+      <button class="btn-submit" id="btn-submit" type="button">
+        <span class="btn-label">Entrar</span>
+        <span class="btn-spinner"></span>
+      </button>
+
+      <p class="attempts-hint" id="attempts-hint"></p>
+
+      <div class="divider">ou</div>
+
+      <div class="login-footer">
+        Não tem conta? <a href="cadastro.html">Criar conta gratuita</a>
+      </div>
+      <div class="login-footer" style="margin-top:0.5rem;">
+        <a href="index.html">← Voltar ao catálogo</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Credenciais simuladas — substituir por API real ── */
+    const ADMIN_EMAILS = ['admin@rentflix.com'];
+
+    const MAX_ATTEMPTS = 5;
+    const LOCKOUT_MS   = 30_000;
+    let attempts = 0, lockedUntil = null, inProgress = false;
+
+    const loginField   = document.getElementById('login-field');
+    const pwField      = document.getElementById('password');
+    const btnSubmit    = document.getElementById('btn-submit');
+    const togglePw     = document.getElementById('toggle-pw');
+    const errLogin     = document.getElementById('err-login');
+    const errPw        = document.getElementById('err-pw');
+    const lockoutMsg   = document.getElementById('lockout-msg');
+    const attemptsHint = document.getElementById('attempts-hint');
+
+    /* Toggle senha */
+    togglePw.addEventListener('click', () => {
+      const isText = pwField.type === 'text';
+      pwField.type = isText ? 'password' : 'text';
+      togglePw.textContent = isText ? '👁' : '🙈';
+    });
+
+    loginField.addEventListener('input', () => clearErr('login'));
+    pwField.addEventListener('input',   () => clearErr('pw'));
+    pwField.addEventListener('keydown', e => { if (e.key === 'Enter') handleSubmit(); });
+    loginField.addEventListener('keydown', e => { if (e.key === 'Enter') pwField.focus(); });
+    btnSubmit.addEventListener('click', handleSubmit);
+
+    function clearErr(f) {
+      if (f === 'login') { loginField.classList.remove('error'); errLogin.textContent = ''; errLogin.classList.remove('visible'); }
+      else               { pwField.classList.remove('error');    errPw.textContent    = ''; errPw.classList.remove('visible'); }
+    }
+    function showErr(f, msg) {
+      if (f === 'login') { loginField.classList.add('error'); errLogin.textContent = msg; errLogin.classList.add('visible'); }
+      else               { pwField.classList.add('error');    errPw.textContent    = msg; errPw.classList.add('visible'); }
+    }
+
+    function isLocked() {
+      if (!lockedUntil) return false;
+      if (Date.now() < lockedUntil) return true;
+      lockedUntil = null; attempts = 0;
+      lockoutMsg.classList.remove('visible');
+      attemptsHint.textContent = '';
+      btnSubmit.disabled = false;
+      return false;
+    }
+
+    function triggerLockout() {
+      lockedUntil = Date.now() + LOCKOUT_MS;
+      btnSubmit.disabled = true;
+      tick();
+    }
+    function tick() {
+      if (!lockedUntil) return;
+      const rem = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (rem <= 0) { isLocked(); return; }
+      lockoutMsg.textContent = `Muitas tentativas. Aguarde ${rem}s para tentar novamente.`;
+      lockoutMsg.classList.add('visible');
+      setTimeout(tick, 1000);
+    }
+
+    function handleSubmit() {
+      if (inProgress || isLocked()) return;
+      clearErr('login'); clearErr('pw');
+
+      const loginVal = loginField.value.trim();
+      const pwVal    = pwField.value;
+      let ok = true;
+
+      if (!loginVal) { showErr('login', 'Informe seu login ou e-mail.'); ok = false; }
+      if (!pwVal)    { showErr('pw',    'Informe sua senha.'); ok = false; }
+      if (pwVal && pwVal.length < 6) { showErr('pw', 'Senha deve ter pelo menos 6 caracteres.'); ok = false; }
+      if (!ok) return;
+
+      inProgress = true;
+      btnSubmit.classList.add('loading');
+      btnSubmit.disabled = true;
+
+      setTimeout(() => {
+        inProgress = false;
+        btnSubmit.classList.remove('loading');
+
+        /* Busca conta no "banco" de usuários cadastrados */
+        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
+        const user = accounts.find(a =>
+          (a.login.toLowerCase() === loginVal.toLowerCase() ||
+           a.email.toLowerCase() === loginVal.toLowerCase()) &&
+          a.password === pwVal
+        );
+
+        /* Verifica também as contas admin fixas */
+        const FIXED_ADMINS = [
+          { email: 'admin@rentflix.com', login: 'admin', password: 'Admin@123', role: 'admin', name: 'Administrador' }
+        ];
+        const adminUser = FIXED_ADMINS.find(a =>
+          (a.login.toLowerCase() === loginVal.toLowerCase() ||
+           a.email.toLowerCase() === loginVal.toLowerCase()) &&
+          a.password === pwVal
+        );
+
+        const matched = adminUser || user;
+
+        if (matched) {
+          attempts = 0;
+          attemptsHint.textContent = '';
+          lockoutMsg.classList.remove('visible');
+          sessionStorage.setItem('rf_user', JSON.stringify({
+            name:  matched.name,
+            email: matched.email,
+            login: matched.login,
+            role:  matched.role || 'user',
+          }));
+          window.location.href = matched.role === 'admin' ? 'admin.html' : 'index.html';
+        } else {
+          attempts++;
+          pwField.value = '';
+          const rem = MAX_ATTEMPTS - attempts;
+          if (attempts >= MAX_ATTEMPTS) {
+            triggerLockout();
+          } else {
+            btnSubmit.disabled = false;
+            showErr('pw', 'Login ou senha inválidos.');
+            if (rem <= 2) {
+              attemptsHint.textContent = `${rem} tentativa(s) restante(s).`;
+              attemptsHint.classList.add('warn');
+            }
+          }
+        }
+      }, 900);
+    }
+  </script>
+</body>
+</html>

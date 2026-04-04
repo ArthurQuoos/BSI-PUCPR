@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RentFlix — Painel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="admin-body">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">🎬 <span>Rent</span>Flix</a>
+    <span class="sidebar-badge">Admin</span>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="movies">
+        <span class="nav-icon">🎬</span> Filmes
+      </button>
+      <button class="nav-item" data-view="accounts">
+        <span class="nav-icon">👥</span> Contas
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebar-user">
+        <span class="sidebar-avatar">👤</span>
+        <span class="sidebar-email" id="sidebar-email">—</span>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <!-- ── CONTEÚDO PRINCIPAL ── -->
+  <main class="admin-main">
+
+    <!-- ═══ VIEW: FILMES ═══ -->
+    <div class="view" id="view-movies">
+
+      <div class="view-header">
+        <div>
+          <h1 class="view-title">Gerenciar Filmes</h1>
+          <p class="view-sub" id="movies-count"></p>
+        </div>
+        <button class="btn btn-primary" id="btn-add-movie">+ Novo Filme</button>
+      </div>
+
+      <!-- Filtro/busca rápida -->
+      <div class="admin-toolbar">
+        <div class="admin-search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="admin-search" placeholder="Buscar filme ou diretor..." />
+        </div>
+        <select id="admin-filter-genre" class="admin-select">
+          <option value="all">Todos os gêneros</option>
+          <option value="acao">Ação</option>
+          <option value="drama">Drama</option>
+          <option value="ficcao">Ficção Científica</option>
+          <option value="terror">Terror</option>
+          <option value="animacao">Animação</option>
+          <option value="comedia">Comédia</option>
+          <option value="classico">Clássico</option>
+        </select>
+        <select id="admin-filter-status" class="admin-select">
+          <option value="all">Todos os status</option>
+          <option value="active">Ativos</option>
+          <option value="hidden">Ocultos</option>
+        </select>
+      </div>
+
+      <!-- Tabela de filmes -->
+      <div class="table-wrap">
+        <table class="admin-table" id="movies-table">
+          <thead>
+            <tr>
+              <th>Filme</th>
+              <th>Diretor</th>
+              <th>Gênero</th>
+              <th>Ano</th>
+              <th>Nota</th>
+              <th>Preço</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="movies-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: CONTAS ═══ -->
+    <div class="view hidden" id="view-accounts">
+
+      <div class="view-header">
+        <div>
+          <h1 class="view-title">Gerenciar Contas</h1>
+          <p class="view-sub" id="accounts-count"></p>
+        </div>
+        <button class="btn btn-primary" id="btn-add-account">+ Nova Conta</button>
+      </div>
+
+      <div class="admin-toolbar">
+        <div class="admin-search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="accounts-search" placeholder="Buscar por e-mail..." />
+        </div>
+        <select id="accounts-filter-role" class="admin-select">
+          <option value="all">Todos os perfis</option>
+          <option value="admin">Admin</option>
+          <option value="user">Usuário</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table" id="accounts-table">
+          <thead>
+            <tr>
+              <th>E-mail</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="accounts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══ MODAL FILME (adicionar / editar) ═══ -->
+  <div class="modal-overlay" id="movie-modal">
+    <div class="modal admin-modal">
+      <button class="modal-close" id="movie-modal-close">✕</button>
+      <h2 class="modal-title" id="movie-modal-title">Novo Filme</h2>
+
+      <div class="admin-form" id="movie-form">
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Título *</label>
+            <input type="text" id="f-title" maxlength="120" placeholder="Ex: Interestelar" />
+            <span class="form-error" id="err-title"></span>
+          </div>
+          <div class="form-field">
+            <label>Diretor *</label>
+            <input type="text" id="f-director" maxlength="100" placeholder="Ex: Christopher Nolan" />
+            <span class="form-error" id="err-director"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Gênero *</label>
+            <select id="f-genre">
+              <option value="">Selecionar...</option>
+              <option value="acao">Ação</option>
+              <option value="drama">Drama</option>
+              <option value="ficcao">Ficção Científica</option>
+              <option value="terror">Terror</option>
+              <option value="animacao">Animação</option>
+              <option value="comedia">Comédia</option>
+              <option value="classico">Clássico</option>
+            </select>
+            <span class="form-error" id="err-genre"></span>
+          </div>
+          <div class="form-field">
+            <label>Badge</label>
+            <select id="f-badge">
+              <option value="">Nenhum</option>
+              <option value="new">Novo</option>
+              <option value="hot">🔥 Hot</option>
+              <option value="classic">Clássico</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Ano *</label>
+            <input type="number" id="f-year" min="1888" max="2099" placeholder="Ex: 2024" />
+            <span class="form-error" id="err-year"></span>
+          </div>
+          <div class="form-field">
+            <label>Nota (0–10) *</label>
+            <input type="number" id="f-rating" min="0" max="10" step="0.1" placeholder="Ex: 8.5" />
+            <span class="form-error" id="err-rating"></span>
+          </div>
+          <div class="form-field">
+            <label>Preço *</label>
+            <input type="text" id="f-price" maxlength="10" placeholder="Ex: R$9,90" />
+            <span class="form-error" id="err-price"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field full">
+            <label>Caminho do Poster</label>
+            <input type="text" id="f-poster" placeholder="./assets/posters/filme.png (ou deixe vazio)" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field full">
+            <label>Sinopse *</label>
+            <textarea id="f-sinopse" rows="3" maxlength="400" placeholder="Descrição breve do filme..."></textarea>
+            <span class="form-error" id="err-sinopse"></span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="movie-form-cancel">Cancelar</button>
+          <button class="btn btn-primary" id="movie-form-save">Salvar Filme</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL CONTA (adicionar / editar) ═══ -->
+  <div class="modal-overlay" id="account-modal">
+    <div class="modal admin-modal">
+      <button class="modal-close" id="account-modal-close">✕</button>
+      <h2 class="modal-title" id="account-modal-title">Nova Conta</h2>
+
+      <div class="admin-form" id="account-form">
+
+        <div class="form-row">
+          <div class="form-field full">
+            <label>E-mail *</label>
+            <input type="email" id="a-email" maxlength="254" placeholder="email@exemplo.com" autocomplete="off" />
+            <span class="form-error" id="err-a-email"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Senha *</label>
+            <div class="field-wrap">
+              <input type="password" id="a-password" maxlength="128" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+              <button class="toggle-pw" id="toggle-a-pw" type="button">👁</button>
+            </div>
+            <span class="form-error" id="err-a-password"></span>
+          </div>
+          <div class="form-field">
+            <label>Perfil *</label>
+            <select id="a-role">
+              <option value="user">Usuário</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="account-form-cancel">Cancelar</button>
+          <button class="btn btn-primary" id="account-form-save">Salvar Conta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL CONFIRMAR EXCLUSÃO ═══ -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal admin-modal confirm-modal">
+      <div class="confirm-icon">⚠️</div>
+      <h2 class="modal-title" id="confirm-title">Confirmar exclusão</h2>
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="confirm-cancel">Cancelar</button>
+        <button class="btn btn-danger" id="confirm-ok">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-title" id="toast-title"></div>
+    <div class="toast-msg"   id="toast-msg"></div>
+  </div>
+
+  <script src="js/movies.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

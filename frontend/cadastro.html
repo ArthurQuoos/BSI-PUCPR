@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RentFlix — Criar Conta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #E8B84B; --gold-dk: #C49A2A; --red: #C0392B;
+      --bg: #0A0A0F; --bg3: #18181f; --surface: #1E1E28;
+      --text: #F0EDE6; --muted: #8A8799; --border: rgba(255,255,255,0.07);
+      --font-display: 'Playfair Display', serif; --font-body: 'DM Sans', sans-serif;
+      --radius: 10px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; position: relative; overflow-x: hidden; }
+    .bg-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 60% 50% at 80% 40%, rgba(192,57,43,0.08), transparent), radial-gradient(ellipse 50% 60% at 20% 70%, rgba(232,184,75,0.06), transparent); }
+    .film-strip { position: fixed; top: 0; bottom: 0; width: 72px; display: flex; flex-direction: column; gap: 6px; padding: 6px; opacity: 0.05; pointer-events: none; z-index: 0; overflow: hidden; }
+    .film-strip.left { left: 0; } .film-strip.right { right: 0; }
+    .film-hole { width: 100%; aspect-ratio: 1; border-radius: 4px; border: 2px solid var(--text); flex-shrink: 0; }
+
+    .signup-wrap { position: relative; z-index: 1; width: 100%; max-width: 520px; padding: 0.5rem; animation: fadeUp 0.45s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .signup-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 18px; padding: 2.5rem 2.25rem; box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
+
+    .login-logo { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; color: var(--gold); text-decoration: none; margin-bottom: 1.75rem; }
+    .login-logo span { color: var(--text); }
+    .signup-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 0.35rem; }
+    .signup-subtitle { font-size: 0.85rem; color: var(--muted); text-align: center; margin-bottom: 2rem; }
+
+    /* Progresso */
+    .progress-bar { display: flex; gap: 6px; margin-bottom: 2rem; }
+    .progress-step { flex: 1; height: 3px; border-radius: 100px; background: var(--border); transition: background 0.3s; }
+    .progress-step.done    { background: var(--gold); }
+    .progress-step.current { background: rgba(232,184,75,0.5); }
+
+    /* Steps */
+    .step { display: none; }
+    .step.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    .step-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+
+    /* Campos */
+    .row { display: flex; gap: 0.85rem; margin-bottom: 1rem; }
+    .field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .field.full { flex: 1 1 100%; }
+    .field label { font-size: 0.73rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .field-wrap { position: relative; display: flex; align-items: center; }
+    .field input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: 0.875rem; padding: 0.6rem 0.9rem; outline: none; transition: border-color 0.2s; }
+    .field-wrap input { padding-right: 2.5rem; }
+    .field input:focus { border-color: var(--gold); }
+    .field input.error { border-color: var(--red); }
+    .field input::placeholder { color: var(--muted); }
+    .toggle-pw { position: absolute; right: 0.7rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 4px; }
+    .toggle-pw:hover { color: var(--text); }
+    .field-error { font-size: 0.72rem; color: var(--red); min-height: 14px; display: none; }
+    .field-error.visible { display: block; }
+
+    /* Força da senha */
+    .pw-strength { height: 3px; border-radius: 100px; margin-top: 4px; background: var(--border); overflow: hidden; }
+    .pw-strength-bar { height: 100%; width: 0%; border-radius: 100px; transition: width 0.3s, background 0.3s; }
+    .pw-strength-label { font-size: 0.7rem; color: var(--muted); margin-top: 3px; min-height: 14px; }
+
+    /* Checkbox termos */
+    .terms-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 0.5rem; }
+    .terms-row input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; accent-color: var(--gold); cursor: pointer; }
+    .terms-row label { font-size: 0.8rem; color: var(--muted); line-height: 1.5; cursor: pointer; }
+    .terms-row a { color: var(--gold); text-decoration: none; }
+    .terms-row a:hover { text-decoration: underline; }
+    .terms-error { font-size: 0.72rem; color: var(--red); display: none; }
+    .terms-error.visible { display: block; }
+
+    /* Botões de navegação */
+    .step-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn-back { flex: 1; padding: 0.7rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-family: var(--font-body); font-size: 0.875rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+    .btn-back:hover { border-color: var(--gold); color: var(--text); }
+    .btn-next { flex: 2; padding: 0.7rem; background: var(--gold); color: #0A0A0F; border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
+    .btn-next:hover:not(:disabled) { background: var(--gold-dk); }
+    .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(10,10,15,0.3); border-top-color: #0A0A0F; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+    .btn-next.loading .btn-spinner { display: block; }
+    .btn-next.loading .btn-label   { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.82rem; color: var(--muted); }
+    .login-footer a { color: var(--gold); text-decoration: none; font-weight: 500; }
+    .login-footer a:hover { text-decoration: underline; }
+
+    /* Sucesso */
+    .success-screen { text-align: center; padding: 1rem 0; display: none; animation: fadeIn 0.4s ease; }
+    .success-screen.visible { display: block; }
+    .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .success-title { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .success-msg { color: var(--muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .btn-go { display: inline-block; padding: 0.7rem 2rem; background: var(--gold); color: #0A0A0F; border-radius: var(--radius); font-weight: 700; font-size: 0.9rem; text-decoration: none; transition: background 0.2s; }
+    .btn-go:hover { background: var(--gold-dk); }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="film-strip left">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+  <div class="film-strip right">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+
+  <div class="signup-wrap">
+    <div class="signup-card">
+      <a href="index.html" class="login-logo">🎬 <span>Rent</span>Flix</a>
+      <h1 class="signup-title">Criar conta</h1>
+      <p class="signup-subtitle">Preencha os dados abaixo para se cadastrar</p>
+
+      <!-- Barra de progresso: 3 passos -->
+      <div class="progress-bar" id="progress-bar">
+        <div class="progress-step current" id="ps-1"></div>
+        <div class="progress-step"         id="ps-2"></div>
+        <div class="progress-step"         id="ps-3"></div>
+      </div>
+
+      <!-- ── STEP 1: Dados pessoais ── -->
+      <div class="step active" id="step-1">
+        <div class="step-label">Passo 1 de 3 — Dados pessoais</div>
+
+        <div class="row">
+          <div class="field full">
+            <label for="nome">Nome completo *</label>
+            <input type="text" id="nome" placeholder="Seu nome completo" autocomplete="name" maxlength="100" />
+            <span class="field-error" id="err-nome"></span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="cpf">CPF *</label>
+            <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" />
+            <span class="field-error" id="err-cpf"></span>
+          </div>
+          <div class="field">
+            <label for="tel">Telefone *</label>
+            <input type="text" id="tel" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" />
+            <span class="field-error" id="err-tel"></span>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <a href="login.html" class="btn-back" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;">← Já tenho conta</a>
+          <button class="btn-next" id="next-1"><span class="btn-label">Continuar →</span><span class="btn-spinner"></span></button>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: Conta ── -->
+      <div class="step" id="step-2">
+        <div class="step-label">Passo 2 de 3 — Dados da conta</div>
+
+        <div class="row">
+          <div class="field full">
+            <label for="email">E-mail *</label>
+            <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" maxlength="254" />
+            <span class="field-error" id="err-email"></span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field full">
+            <label for="login-name">Login *</label>
+            <input type="text" id="login-name" placeholder="Mínimo 4 caracteres, sem espaços" autocomplete="username" maxlength="30" />
+            <span class="field-error" id="err-login-name"></span>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn-back" id="back-2">← Voltar</button>
+          <button class="btn-next" id="next-2"><span class="btn-label">Continuar →</span><span class="btn-spinner"></span></button>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Senha e termos ── -->
+      <div class="step" id="step-3">
+        <div class="step-label">Passo 3 de 3 — Segurança</div>
+
+        <div class="row">
+          <div class="field full">
+            <label for="pw">Senha *</label>
+            <div class="field-wrap">
+              <input type="password" id="pw" placeholder="Mínimo 8 caracteres" autocomplete="new-password" maxlength="128" />
+              <button class="toggle-pw" id="toggle-pw" type="button">👁</button>
+            </div>
+            <div class="pw-strength"><div class="pw-strength-bar" id="pw-bar"></div></div>
+            <div class="pw-strength-label" id="pw-label"></div>
+            <span class="field-error" id="err-pw"></span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field full">
+            <label for="pw2">Confirmar senha *</label>
+            <div class="field-wrap">
+              <input type="password" id="pw2" placeholder="Repita a senha" autocomplete="new-password" maxlength="128" />
+              <button class="toggle-pw" id="toggle-pw2" type="button">👁</button>
+            </div>
+            <span class="field-error" id="err-pw2"></span>
+          </div>
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms" />
+          <label for="terms">Li e aceito os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a> da RentFlix.</label>
+        </div>
+        <span class="terms-error" id="err-terms">Você precisa aceitar os termos para continuar.</span>
+
+        <div class="step-actions">
+          <button class="btn-back" id="back-3">← Voltar</button>
+          <button class="btn-next" id="btn-register"><span class="btn-label">Criar minha conta</span><span class="btn-spinner"></span></button>
+        </div>
+      </div>
+
+      <!-- ── Sucesso ── -->
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">🎬</div>
+        <h2 class="success-title">Conta criada!</h2>
+        <p class="success-msg">Bem-vindo(a) à RentFlix, <strong id="success-name"></strong>!<br>Sua conta foi criada com sucesso. Agora você pode entrar e alugar seus filmes favoritos.</p>
+        <a href="login.html" class="btn-go">Ir para o Login</a>
+      </div>
+
+      <div class="login-footer" id="footer-link">
+        Já tem conta? <a href="login.html">Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    /* ── Estado do formulário multi-step ── */
+    let currentStep = 1;
+    const TOTAL_STEPS = 3;
+
+    function goTo(step) {
+      $('step-' + currentStep).classList.remove('active');
+      currentStep = step;
+      $('step-' + currentStep).classList.add('active');
+      updateProgress();
+    }
+
+    function updateProgress() {
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const el = $('ps-' + i);
+        el.classList.remove('done', 'current');
+        if (i < currentStep)      el.classList.add('done');
+        else if (i === currentStep) el.classList.add('current');
+      }
+    }
+
+    /* ── Helpers de erro ── */
+    function setErr(id, msg) {
+      const el = $(id);
+      el.textContent = msg;
+      el.classList.toggle('visible', !!msg);
+    }
+    function markErr(inputId, msg, errId) {
+      const input = $(inputId);
+      if (msg) { input.classList.add('error'); setErr(errId, msg); }
+      else      { input.classList.remove('error'); setErr(errId, ''); }
+    }
+
+    /* ── Máscaras ── */
+    $('cpf').addEventListener('input', e => {
+      let v = e.target.value.replace(/\D/g,'').slice(0,11);
+      if (v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
+      else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');
+      else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
+      e.target.value = v;
+    });
+
+    $('tel').addEventListener('input', e => {
+      let v = e.target.value.replace(/\D/g,'').slice(0,11);
+      if (v.length > 10)     v = v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+      else if (v.length > 6) v = v.replace(/(\d{2})(\d{4})(\d{1,4})/,'($1) $2-$3');
+      else if (v.length > 2) v = v.replace(/(\d{2})(\d{1,5})/,'($1) $2');
+      e.target.value = v;
+    });
+
+    /* ── Validação CPF (algoritmo real) ── */
+    function validarCPF(cpf) {
+      const c = cpf.replace(/\D/g,'');
+      if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+      let s = 0;
+      for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
+      let r = (s * 10) % 11; if (r === 10 || r === 11) r = 0;
+      if (r !== parseInt(c[9])) return false;
+      s = 0;
+      for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
+      r = (s * 10) % 11; if (r === 10 || r === 11) r = 0;
+      return r === parseInt(c[10]);
+    }
+
+    function validarTel(tel) {
+      return tel.replace(/\D/g,'').length >= 10;
+    }
+
+    /* ── Força da senha ── */
+    $('pw').addEventListener('input', () => {
+      const pw = $('pw').value;
+      let score = 0;
+      if (pw.length >= 8)                    score++;
+      if (/[A-Z]/.test(pw))                 score++;
+      if (/[0-9]/.test(pw))                 score++;
+      if (/[^A-Za-z0-9]/.test(pw))          score++;
+      const bar    = $('pw-bar');
+      const label  = $('pw-label');
+      const levels = [
+        { pct: '0%',   color: 'transparent', txt: '' },
+        { pct: '25%',  color: '#e07060',     txt: 'Fraca' },
+        { pct: '50%',  color: '#e0a060',     txt: 'Razoável' },
+        { pct: '75%',  color: '#e8c840',     txt: 'Boa' },
+        { pct: '100%', color: '#4caf80',     txt: 'Forte' },
+      ];
+      bar.style.width      = levels[score].pct;
+      bar.style.background = levels[score].color;
+      label.textContent    = levels[score].txt;
+      label.style.color    = levels[score].color;
+    });
+
+    /* ── Toggle senhas ── */
+    ['toggle-pw', 'toggle-pw2'].forEach((btnId, i) => {
+      const inputId = i === 0 ? 'pw' : 'pw2';
+      $(btnId).addEventListener('click', () => {
+        const input = $(inputId);
+        const isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        $(btnId).textContent = isText ? '👁' : '🙈';
+      });
+    });
+
+    /* ── Validações por step ── */
+    function validateStep1() {
+      let ok = true;
+      const nome = $('nome').value.trim();
+      const cpf  = $('cpf').value.trim();
+      const tel  = $('tel').value.trim();
+      const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
+
+      if (!nome || nome.length < 3)  { markErr('nome','Nome deve ter ao menos 3 caracteres.','err-nome'); ok=false; }
+      else                            { markErr('nome','','err-nome'); }
+
+      if (!validarCPF(cpf))           { markErr('cpf','CPF inválido.','err-cpf'); ok=false; }
+      else if (accounts.find(a => a.cpf === cpf)) { markErr('cpf','CPF já cadastrado.','err-cpf'); ok=false; }
+      else                            { markErr('cpf','','err-cpf'); }
+
+      if (!validarTel(tel))           { markErr('tel','Telefone inválido.','err-tel'); ok=false; }
+      else if (accounts.find(a => a.phone && a.phone.replace(/\D/g,'') === tel.replace(/\D/g,''))) { markErr('tel','Telefone já cadastrado.','err-tel'); ok=false; }
+      else                            { markErr('tel','','err-tel'); }
+
+      return ok;
+    }
+
+    function validateStep2() {
+      let ok = true;
+      const email = $('email').value.trim();
+      const login = $('login-name').value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { markErr('email','E-mail inválido.','err-email'); ok=false; }
+      else {
+        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
+        if (accounts.find(a => a.email.toLowerCase() === email.toLowerCase())) { markErr('email','E-mail já cadastrado.','err-email'); ok=false; }
+        else markErr('email','','err-email');
+      }
+      if (!login || login.length < 4 || /\s/.test(login)) { markErr('login-name','Login deve ter ao menos 4 caracteres e sem espaços.','err-login-name'); ok=false; }
+      else {
+        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
+        if (accounts.find(a => a.login.toLowerCase() === login.toLowerCase())) { markErr('login-name','Login já está em uso.','err-login-name'); ok=false; }
+        else markErr('login-name','','err-login-name');
+      }
+      return ok;
+    }
+
+    function validateStep3() {
+      let ok = true;
+      const pw  = $('pw').value;
+      const pw2 = $('pw2').value;
+
+      if (!pw || pw.length < 8)       { markErr('pw','Senha deve ter ao menos 8 caracteres.','err-pw'); ok=false; }
+      else if (!/[A-Z]/.test(pw))     { markErr('pw','Inclua ao menos uma letra maiúscula.','err-pw'); ok=false; }
+      else if (!/[0-9]/.test(pw))     { markErr('pw','Inclua ao menos um número.','err-pw'); ok=false; }
+      else                             { markErr('pw','','err-pw'); }
+      if (pw !== pw2)                  { markErr('pw2','As senhas não coincidem.','err-pw2'); ok=false; }
+      else                             { markErr('pw2','','err-pw2'); }
+      if (!$('terms').checked)         { $('err-terms').classList.add('visible'); ok=false; }
+      else                             { $('err-terms').classList.remove('visible'); }
+      return ok;
+    }
+
+    /* ── Navegação ── */
+    $('next-1').addEventListener('click', () => { if (validateStep1()) goTo(2); });
+    $('next-2').addEventListener('click', () => { if (validateStep2()) goTo(3); });
+    $('back-2').addEventListener('click', () => goTo(1));
+    $('back-3').addEventListener('click', () => goTo(2));
+
+    /* ── Submissão final ── */
+    $('btn-register').addEventListener('click', () => {
+      if (!validateStep3()) return;
+
+      const btn = $('btn-register');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const account = {
+          id:       Date.now(),
+          name:     $('nome').value.trim(),
+          cpf:      $('cpf').value.trim(),
+          phone:    $('tel').value.trim(),
+          email:    $('email').value.trim().toLowerCase(),
+          login:    $('login-name').value.trim().toLowerCase(),
+          password: $('pw').value,
+          role:     'user',
+          active:   true,
+          createdAt: new Date().toISOString(),
+        };
+
+        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
+        accounts.push(account);
+        localStorage.setItem('rf_accounts', JSON.stringify(accounts));
+
+        btn.classList.remove('loading');
+        btn.disabled = false;
+
+        /* Mostra tela de sucesso */
+        for (let i = 1; i <= TOTAL_STEPS; i++) $('step-'+i).classList.remove('active');
+        $('progress-bar').style.display = 'none';
+        $('footer-link').style.display  = 'none';
+        $('success-name').textContent   = account.name.split(' ')[0];
+        $('success-screen').classList.add('visible');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

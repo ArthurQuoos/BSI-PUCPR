@@ -35,26 +35,54 @@
 
     <ul class="nav-links">
       <li><a href="#catalogo">Catálogo</a></li>
-      <li><a href="#planos">Planos</a></li>
       <li><a href="#como-funciona">Como funciona</a></li>
       <li><a href="#" class="nav-highlight">Novidades</a></li>
     </ul>
 
     <div class="nav-actions">
-      <div class="search-bar">
+      <div class="search-bar" id="search-wrap">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Buscar filmes..." id="search-input" />
+        <input type="text" placeholder="Buscar filmes..." id="search-input" autocomplete="off" />
+        <button class="search-clear" id="search-clear" title="Limpar">&#10005;</button>
+        <div class="search-suggestions" id="search-suggestions"></div>
       </div>
 
-      <button class="cart-btn" id="cart-btn">
-        🛒 Carrinho
-        <span class="cart-count" id="cart-count">0</span>
-      </button>
+      <div class="cart-wrap" id="cart-wrap">
+        <button class="cart-btn" id="cart-btn">
+          🛒 Carrinho
+          <span class="cart-count" id="cart-count">0</span>
+        </button>
+        <div class="cart-panel" id="cart-panel">
+          <div class="cart-panel-header">
+            <span class="cart-panel-title">Meu Carrinho</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button class="cart-clear-btn" id="cart-clear-btn" title="Limpar carrinho">🗑 Limpar</button>
+              <button class="cart-panel-close" id="cart-panel-close">&#10005;</button>
+            </div>
+          </div>
+          <ul class="cart-items" id="cart-items"></ul>
+          <div class="cart-empty" id="cart-empty"><span>🎬</span><p>Seu carrinho está vazio.</p></div>
+          <div class="cart-footer" id="cart-footer">
+            <div class="cart-total-row">
+              <span>Total</span>
+              <span class="cart-total-value" id="cart-total">R$0,00</span>
+            </div>
+            <button class="btn btn-danger btn-full" id="btn-checkout">Finalizar aluguel</button>
+            <p class="cart-login-hint" id="cart-login-hint" style="display:none;">
+              🔒 <a href="login.html">Entre ou crie uma conta</a> para finalizar o aluguel.
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <a href="#" class="btn btn-ghost">Entrar</a>
-      <a href="#planos" class="btn btn-primary">Assinar</a>
+      <a href="login.html" class="btn btn-ghost" id="btn-entrar">Entrar</a>
+      <div class="user-info" id="user-info" style="display:none;">
+        <span class="user-greeting" id="user-greeting"></span>
+        <button class="btn btn-ghost btn-sm" id="btn-sair">Sair</button>
+      </div>
+
     </div>
   </nav>
 
@@ -71,7 +99,6 @@
 
       <div class="hero-actions">
         <a href="#catalogo" class="btn btn-danger btn-lg">▶ Ver Catálogo</a>
-        <a href="#planos" class="btn btn-ghost btn-lg">Ver planos</a>
       </div>
 
       <div class="hero-stats">
@@ -137,7 +164,8 @@
       </div>
 
       <div class="featured-poster">
-        <div class="poster-bg" style="background:linear-gradient(135deg,#1a1209,#5c4020);font-size:4rem;">🔬</div>
+        <div class="poster-bg">
+          <img src="./assets/posters/oppenheimer.png" alt="Oppenheimer" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">
       </div>
     </div>
   </section>
@@ -151,16 +179,40 @@
       <a href="#" class="section-link">Ver todos →</a>
     </div>
 
-    <!-- Filtros de gênero -->
-    <div class="genre-row" id="genre-row">
-      <button class="genre-pill active" data-genre="all">Todos</button>
-      <button class="genre-pill" data-genre="acao">Ação</button>
-      <button class="genre-pill" data-genre="drama">Drama</button>
-      <button class="genre-pill" data-genre="comedia">Comédia</button>
-      <button class="genre-pill" data-genre="terror">Terror</button>
-      <button class="genre-pill" data-genre="ficcao">Ficção Científica</button>
-      <button class="genre-pill" data-genre="animacao">Animação</button>
-      <button class="genre-pill" data-genre="classico">Clássicos</button>
+    <!-- Filtros -->
+    <div class="filters-row">
+
+      <!-- Dropdown Gênero -->
+      <div class="genre-filter-wrap" id="genre-row">
+        <button class="genre-trigger" id="genre-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+          <span id="genre-trigger-label">Generos</span>
+          <svg class="genre-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="genre-dropdown" id="genre-dropdown" role="listbox">
+          <button class="genre-option active" data-genre="all" role="option"><span class="genre-option-check">&#10003;</span> Todos</button>
+          <button class="genre-option" data-genre="acao" role="option"><span class="genre-option-check">&#10003;</span> Acao</button>
+          <button class="genre-option" data-genre="drama" role="option"><span class="genre-option-check">&#10003;</span> Drama</button>
+          <button class="genre-option" data-genre="comedia" role="option"><span class="genre-option-check">&#10003;</span> Comedia</button>
+          <button class="genre-option" data-genre="terror" role="option"><span class="genre-option-check">&#10003;</span> Terror</button>
+          <button class="genre-option" data-genre="ficcao" role="option"><span class="genre-option-check">&#10003;</span> Ficcao Cientifica</button>
+          <button class="genre-option" data-genre="animacao" role="option"><span class="genre-option-check">&#10003;</span> Animacao</button>
+          <button class="genre-option" data-genre="classico" role="option"><span class="genre-option-check">&#10003;</span> Classicos</button>
+        </div>
+      </div>
+
+      <!-- Dropdown Diretor -->
+      <div class="genre-filter-wrap" id="director-wrap">
+        <button class="genre-trigger" id="director-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span id="director-trigger-label">Diretor</span>
+          <svg class="genre-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="genre-dropdown" id="director-dropdown" role="listbox">
+          <button class="genre-option active" data-director="all" role="option"><span class="genre-option-check">&#10003;</span> Todos</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- Grid de filmes (preenchido via JS) -->
@@ -202,66 +254,7 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════
-       PLANOS
-  ════════════════════════════════════════ -->
-  <section class="section" id="planos">
-    <div class="section-header">
-      <h2 class="section-title">Planos e preços</h2>
-    </div>
-    <div class="plans-grid">
 
-      <div class="plan-card">
-        <h3 class="plan-name">Avulso</h3>
-        <div class="plan-price">
-          <span class="plan-amount">R$4,90</span>
-          <span class="plan-period">/ filme</span>
-        </div>
-        <ul class="plan-features">
-          <li><span class="check">✓</span> Aluguel por 48 horas</li>
-          <li><span class="check">✓</span> Full HD 1080p</li>
-          <li><span class="check">✓</span> 1 dispositivo</li>
-          <li><span class="cross">✗</span> Sem desconto em lançamentos</li>
-          <li><span class="cross">✗</span> Sem histórico salvo</li>
-        </ul>
-        <button class="btn btn-ghost btn-full">Começar agora</button>
-      </div>
-
-      <div class="plan-card plan-featured">
-        <div class="plan-badge">Mais popular</div>
-        <h3 class="plan-name">Cinéfilo</h3>
-        <div class="plan-price">
-          <span class="plan-amount">R$29,90</span>
-          <span class="plan-period">/ mês</span>
-        </div>
-        <ul class="plan-features">
-          <li><span class="check">✓</span> 6 filmes por mês</li>
-          <li><span class="check">✓</span> Full HD 1080p</li>
-          <li><span class="check">✓</span> 2 dispositivos simultâneos</li>
-          <li><span class="check">✓</span> 20% de desconto em avulsos</li>
-          <li><span class="check">✓</span> Histórico e lista de desejos</li>
-        </ul>
-        <button class="btn btn-primary btn-full" id="plan-cineofilo-btn">Assinar agora</button>
-      </div>
-
-      <div class="plan-card">
-        <h3 class="plan-name">Família</h3>
-        <div class="plan-price">
-          <span class="plan-amount">R$49,90</span>
-          <span class="plan-period">/ mês</span>
-        </div>
-        <ul class="plan-features">
-          <li><span class="check">✓</span> 15 filmes por mês</li>
-          <li><span class="check">✓</span> Qualidade 4K Ultra HD</li>
-          <li><span class="check">✓</span> 4 dispositivos simultâneos</li>
-          <li><span class="check">✓</span> 30% de desconto em avulsos</li>
-          <li><span class="check">✓</span> Perfis infantis com controle</li>
-        </ul>
-        <button class="btn btn-ghost btn-full" id="plan-familia-btn">Assinar agora</button>
-      </div>
-
-    </div>
-  </section>
 
   <!-- ═══════════════════════════════════════
        RODAPÉ
@@ -294,7 +287,6 @@
           <li><a href="#">Minha conta</a></li>
           <li><a href="#">Meus aluguéis</a></li>
           <li><a href="#">Lista de desejos</a></li>
-          <li><a href="#">Planos</a></li>
           <li><a href="#">Recargas</a></li>
         </ul>
       </div>
@@ -326,7 +318,7 @@
 
       <div class="modal-header">
         <div class="modal-poster">
-          <div class="poster-bg" id="modal-poster-bg"></div>
+          <img id="modal-poster-img" src="./assets/posters/oppenheimer.png" alt="Oppenheimer" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">
         </div>
         <div class="modal-info">
           <h2 class="modal-title" id="modal-title"></h2>
@@ -334,6 +326,7 @@
             <span class="meta-chip" id="modal-year"></span>
             <span class="meta-chip" id="modal-rating"></span>
             <span class="meta-chip" id="modal-genre"></span>
+            <span class="meta-chip" id="modal-director"></span>
           </div>
           <div class="modal-price-row">
             <span class="modal-price" id="modal-price"></span>
