@@ -69,10 +69,16 @@
 <body>
   <div class="bg-glow"></div>
   <div class="film-strip left">
-    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
   </div>
   <div class="film-strip right">
-    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
   </div>
 
   <div class="login-wrap">
@@ -86,7 +92,8 @@
       <div class="field">
         <label for="login-field">Login ou E-mail</label>
         <div class="field-wrap">
-          <input type="text" id="login-field" placeholder="seu_login ou email@exemplo.com" autocomplete="username" maxlength="254" />
+          <input type="text" id="login-field" placeholder="seu_login ou email@exemplo.com"
+                 autocomplete="username" maxlength="254" />
         </div>
         <span class="field-error" id="err-login"></span>
       </div>
@@ -94,7 +101,8 @@
       <div class="field">
         <label for="password">Senha</label>
         <div class="field-wrap">
-          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" maxlength="128" />
+          <input type="password" id="password" placeholder="••••••••"
+                 autocomplete="current-password" maxlength="128" />
           <button class="toggle-pw" id="toggle-pw" type="button" aria-label="Mostrar senha">👁</button>
         </div>
         <span class="field-error" id="err-pw"></span>
@@ -119,8 +127,10 @@
   </div>
 
   <script>
-    /* ── Credenciais simuladas — substituir por API real ── */
-    const ADMIN_EMAILS = ['admin@rentflix.com'];
+    /* ════════════════════════════════════════════
+       CONFIGURAÇÃO
+    ════════════════════════════════════════════ */
+    const API_BASE = 'http://localhost:5000'; // ajuste se necessário
 
     const MAX_ATTEMPTS = 5;
     const LOCKOUT_MS   = 30_000;
@@ -181,7 +191,10 @@
       setTimeout(tick, 1000);
     }
 
-    function handleSubmit() {
+    /* ════════════════════════════════════════════
+       SUBMIT — chama POST /api/login
+    ════════════════════════════════════════════ */
+    async function handleSubmit() {
       if (inProgress || isLocked()) return;
       clearErr('login'); clearErr('pw');
 
@@ -198,42 +211,23 @@
       btnSubmit.classList.add('loading');
       btnSubmit.disabled = true;
 
-      setTimeout(() => {
-        inProgress = false;
-        btnSubmit.classList.remove('loading');
+      try {
+        const res  = await fetch(`${API_BASE}/api/login`, {
+          method:      'POST',
+          credentials: 'include',           // envia/recebe cookie de sessão
+          headers:     { 'Content-Type': 'application/json' },
+          body:        JSON.stringify({ login: loginVal, password: pwVal }),
+        });
+        const json = await res.json();
 
-        /* Busca conta no "banco" de usuários cadastrados */
-        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
-        const user = accounts.find(a =>
-          (a.login.toLowerCase() === loginVal.toLowerCase() ||
-           a.email.toLowerCase() === loginVal.toLowerCase()) &&
-          a.password === pwVal
-        );
-
-        /* Verifica também as contas admin fixas */
-        const FIXED_ADMINS = [
-          { email: 'admin@rentflix.com', login: 'admin', password: 'Admin@123', role: 'admin', name: 'Administrador' }
-        ];
-        const adminUser = FIXED_ADMINS.find(a =>
-          (a.login.toLowerCase() === loginVal.toLowerCase() ||
-           a.email.toLowerCase() === loginVal.toLowerCase()) &&
-          a.password === pwVal
-        );
-
-        const matched = adminUser || user;
-
-        if (matched) {
+        if (json.ok) {
+          /* Login bem-sucedido — redireciona */
           attempts = 0;
           attemptsHint.textContent = '';
           lockoutMsg.classList.remove('visible');
-          sessionStorage.setItem('rf_user', JSON.stringify({
-            name:  matched.name,
-            email: matched.email,
-            login: matched.login,
-            role:  matched.role || 'user',
-          }));
-          window.location.href = matched.role === 'admin' ? 'admin.html' : 'index.html';
+          window.location.href = json.data.role === 'admin' ? 'admin.html' : 'index.html';
         } else {
+          /* Falha — contabiliza tentativa */
           attempts++;
           pwField.value = '';
           const rem = MAX_ATTEMPTS - attempts;
@@ -241,14 +235,20 @@
             triggerLockout();
           } else {
             btnSubmit.disabled = false;
-            showErr('pw', 'Login ou senha inválidos.');
+            showErr('pw', json.error || 'Login ou senha inválidos.');
             if (rem <= 2) {
               attemptsHint.textContent = `${rem} tentativa(s) restante(s).`;
               attemptsHint.classList.add('warn');
             }
           }
         }
-      }, 900);
+      } catch (_) {
+        showErr('pw', 'Erro de conexão com o servidor. Tente novamente.');
+        btnSubmit.disabled = false;
+      } finally {
+        inProgress = false;
+        btnSubmit.classList.remove('loading');
+      }
     }
   </script>
 </body>

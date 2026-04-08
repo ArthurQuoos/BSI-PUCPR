@@ -73,6 +73,10 @@
     .terms-error { font-size: 0.72rem; color: var(--red); display: none; }
     .terms-error.visible { display: block; }
 
+    /* Erro geral (API) */
+    .api-error { background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.3); border-radius: var(--radius); padding: 0.7rem 1rem; font-size: 0.82rem; color: #e07060; text-align: center; margin-bottom: 1rem; display: none; }
+    .api-error.visible { display: block; }
+
     /* Botões de navegação */
     .step-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
     .btn-back { flex: 1; padding: 0.7rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-family: var(--font-body); font-size: 0.875rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
@@ -120,6 +124,9 @@
         <div class="progress-step"         id="ps-2"></div>
         <div class="progress-step"         id="ps-3"></div>
       </div>
+
+      <!-- Erro geral da API (ex: e-mail já cadastrado) -->
+      <div class="api-error" id="api-error"></div>
 
       <!-- ── STEP 1: Dados pessoais ── -->
       <div class="step active" id="step-1">
@@ -233,6 +240,11 @@
   </div>
 
   <script>
+    /* ════════════════════════════════════════════
+       CONFIGURAÇÃO
+    ════════════════════════════════════════════ */
+    const API_BASE = 'http://localhost:5000'; // ajuste se necessário
+
     const $ = id => document.getElementById(id);
 
     /* ── Estado do formulário multi-step ── */
@@ -243,6 +255,7 @@
       $('step-' + currentStep).classList.remove('active');
       currentStep = step;
       $('step-' + currentStep).classList.add('active');
+      hideApiError();
       updateProgress();
     }
 
@@ -250,7 +263,7 @@
       for (let i = 1; i <= TOTAL_STEPS; i++) {
         const el = $('ps-' + i);
         el.classList.remove('done', 'current');
-        if (i < currentStep)      el.classList.add('done');
+        if (i < currentStep)        el.classList.add('done');
         else if (i === currentStep) el.classList.add('current');
       }
     }
@@ -263,8 +276,15 @@
     }
     function markErr(inputId, msg, errId) {
       const input = $(inputId);
-      if (msg) { input.classList.add('error'); setErr(errId, msg); }
+      if (msg) { input.classList.add('error');    setErr(errId, msg); }
       else      { input.classList.remove('error'); setErr(errId, ''); }
+    }
+    function showApiError(msg) {
+      $('api-error').textContent = msg;
+      $('api-error').classList.add('visible');
+    }
+    function hideApiError() {
+      $('api-error').classList.remove('visible');
     }
 
     /* ── Máscaras ── */
@@ -306,12 +326,12 @@
     $('pw').addEventListener('input', () => {
       const pw = $('pw').value;
       let score = 0;
-      if (pw.length >= 8)                    score++;
-      if (/[A-Z]/.test(pw))                 score++;
-      if (/[0-9]/.test(pw))                 score++;
-      if (/[^A-Za-z0-9]/.test(pw))          score++;
-      const bar    = $('pw-bar');
-      const label  = $('pw-label');
+      if (pw.length >= 8)           score++;
+      if (/[A-Z]/.test(pw))        score++;
+      if (/[0-9]/.test(pw))        score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      const bar   = $('pw-bar');
+      const label = $('pw-label');
       const levels = [
         { pct: '0%',   color: 'transparent', txt: '' },
         { pct: '25%',  color: '#e07060',     txt: 'Fraca' },
@@ -329,31 +349,32 @@
     ['toggle-pw', 'toggle-pw2'].forEach((btnId, i) => {
       const inputId = i === 0 ? 'pw' : 'pw2';
       $(btnId).addEventListener('click', () => {
-        const input = $(inputId);
+        const input  = $(inputId);
         const isText = input.type === 'text';
-        input.type = isText ? 'password' : 'text';
+        input.type        = isText ? 'password' : 'text';
         $(btnId).textContent = isText ? '👁' : '🙈';
       });
     });
 
-    /* ── Validações por step ── */
+    /* ════════════════════════════════════════════
+       VALIDAÇÕES POR STEP
+       Step 1 e 2: apenas frontend (sem chamada à API ainda)
+       Step 3: submete tudo para POST /api/cadastro
+    ════════════════════════════════════════════ */
     function validateStep1() {
       let ok = true;
       const nome = $('nome').value.trim();
       const cpf  = $('cpf').value.trim();
       const tel  = $('tel').value.trim();
-      const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
 
-      if (!nome || nome.length < 3)  { markErr('nome','Nome deve ter ao menos 3 caracteres.','err-nome'); ok=false; }
-      else                            { markErr('nome','','err-nome'); }
+      if (!nome || nome.length < 3) { markErr('nome', 'Nome deve ter ao menos 3 caracteres.', 'err-nome'); ok = false; }
+      else                           { markErr('nome', '', 'err-nome'); }
 
-      if (!validarCPF(cpf))           { markErr('cpf','CPF inválido.','err-cpf'); ok=false; }
-      else if (accounts.find(a => a.cpf === cpf)) { markErr('cpf','CPF já cadastrado.','err-cpf'); ok=false; }
-      else                            { markErr('cpf','','err-cpf'); }
+      if (!validarCPF(cpf))          { markErr('cpf', 'CPF inválido.', 'err-cpf'); ok = false; }
+      else                           { markErr('cpf', '', 'err-cpf'); }
 
-      if (!validarTel(tel))           { markErr('tel','Telefone inválido.','err-tel'); ok=false; }
-      else if (accounts.find(a => a.phone && a.phone.replace(/\D/g,'') === tel.replace(/\D/g,''))) { markErr('tel','Telefone já cadastrado.','err-tel'); ok=false; }
-      else                            { markErr('tel','','err-tel'); }
+      if (!validarTel(tel))          { markErr('tel', 'Telefone inválido.', 'err-tel'); ok = false; }
+      else                           { markErr('tel', '', 'err-tel'); }
 
       return ok;
     }
@@ -363,18 +384,18 @@
       const email = $('email').value.trim();
       const login = $('login-name').value.trim();
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { markErr('email','E-mail inválido.','err-email'); ok=false; }
-      else {
-        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
-        if (accounts.find(a => a.email.toLowerCase() === email.toLowerCase())) { markErr('email','E-mail já cadastrado.','err-email'); ok=false; }
-        else markErr('email','','err-email');
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        markErr('email', 'E-mail inválido.', 'err-email'); ok = false;
+      } else {
+        markErr('email', '', 'err-email');
       }
-      if (!login || login.length < 4 || /\s/.test(login)) { markErr('login-name','Login deve ter ao menos 4 caracteres e sem espaços.','err-login-name'); ok=false; }
-      else {
-        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
-        if (accounts.find(a => a.login.toLowerCase() === login.toLowerCase())) { markErr('login-name','Login já está em uso.','err-login-name'); ok=false; }
-        else markErr('login-name','','err-login-name');
+
+      if (!login || login.length < 4 || /\s/.test(login)) {
+        markErr('login-name', 'Login deve ter ao menos 4 caracteres e sem espaços.', 'err-login-name'); ok = false;
+      } else {
+        markErr('login-name', '', 'err-login-name');
       }
+
       return ok;
     }
 
@@ -383,59 +404,81 @@
       const pw  = $('pw').value;
       const pw2 = $('pw2').value;
 
-      if (!pw || pw.length < 8)       { markErr('pw','Senha deve ter ao menos 8 caracteres.','err-pw'); ok=false; }
-      else if (!/[A-Z]/.test(pw))     { markErr('pw','Inclua ao menos uma letra maiúscula.','err-pw'); ok=false; }
-      else if (!/[0-9]/.test(pw))     { markErr('pw','Inclua ao menos um número.','err-pw'); ok=false; }
-      else                             { markErr('pw','','err-pw'); }
-      if (pw !== pw2)                  { markErr('pw2','As senhas não coincidem.','err-pw2'); ok=false; }
-      else                             { markErr('pw2','','err-pw2'); }
-      if (!$('terms').checked)         { $('err-terms').classList.add('visible'); ok=false; }
-      else                             { $('err-terms').classList.remove('visible'); }
+      if (!pw || pw.length < 8)    { markErr('pw', 'Senha deve ter ao menos 8 caracteres.', 'err-pw'); ok = false; }
+      else if (!/[A-Z]/.test(pw)) { markErr('pw', 'Inclua ao menos uma letra maiúscula.', 'err-pw'); ok = false; }
+      else if (!/[0-9]/.test(pw)) { markErr('pw', 'Inclua ao menos um número.', 'err-pw'); ok = false; }
+      else                         { markErr('pw', '', 'err-pw'); }
+
+      if (pw !== pw2) { markErr('pw2', 'As senhas não coincidem.', 'err-pw2'); ok = false; }
+      else             { markErr('pw2', '', 'err-pw2'); }
+
+      if (!$('terms').checked) { $('err-terms').classList.add('visible'); ok = false; }
+      else                      { $('err-terms').classList.remove('visible'); }
+
       return ok;
     }
 
-    /* ── Navegação ── */
+    /* ── Navegação entre steps ── */
     $('next-1').addEventListener('click', () => { if (validateStep1()) goTo(2); });
     $('next-2').addEventListener('click', () => { if (validateStep2()) goTo(3); });
     $('back-2').addEventListener('click', () => goTo(1));
     $('back-3').addEventListener('click', () => goTo(2));
 
-    /* ── Submissão final ── */
-    $('btn-register').addEventListener('click', () => {
+    /* ════════════════════════════════════════════
+       SUBMISSÃO FINAL — POST /api/cadastro
+    ════════════════════════════════════════════ */
+    $('btn-register').addEventListener('click', async () => {
       if (!validateStep3()) return;
 
+      hideApiError();
       const btn = $('btn-register');
       btn.classList.add('loading');
       btn.disabled = true;
 
-      setTimeout(() => {
-        const account = {
-          id:       Date.now(),
-          name:     $('nome').value.trim(),
-          cpf:      $('cpf').value.trim(),
-          phone:    $('tel').value.trim(),
-          email:    $('email').value.trim().toLowerCase(),
-          login:    $('login-name').value.trim().toLowerCase(),
-          password: $('pw').value,
-          role:     'user',
-          active:   true,
-          createdAt: new Date().toISOString(),
-        };
+      const payload = {
+        nome:            $('nome').value.trim(),
+        cpf:             $('cpf').value.trim(),
+        telefone:        $('tel').value.trim(),
+        email:           $('email').value.trim().toLowerCase(),
+        login:           $('login-name').value.trim().toLowerCase(),
+        password:        $('pw').value,
+      };
 
-        const accounts = JSON.parse(localStorage.getItem('rf_accounts') || '[]');
-        accounts.push(account);
-        localStorage.setItem('rf_accounts', JSON.stringify(accounts));
+      try {
+        const res  = await fetch(`${API_BASE}/api/cadastro`, {
+          method:      'POST',
+          credentials: 'include',
+          headers:     { 'Content-Type': 'application/json' },
+          body:        JSON.stringify(payload),
+        });
+        const json = await res.json();
 
+        if (json.ok) {
+          /* ── Sucesso: esconde steps e mostra tela final ── */
+          for (let i = 1; i <= TOTAL_STEPS; i++) $('step-' + i).classList.remove('active');
+          $('progress-bar').style.display = 'none';
+          $('footer-link').style.display  = 'none';
+          $('api-error').style.display    = 'none';
+          $('success-name').textContent   = payload.nome.split(' ')[0];
+          $('success-screen').classList.add('visible');
+        } else {
+          /* ── Erro da API (ex: e-mail já cadastrado) ── */
+          showApiError(json.error || 'Erro ao criar conta. Tente novamente.');
+
+          // Se o erro for de e-mail/login duplicado, volta para o step 2
+          const errMsg = (json.error || '').toLowerCase();
+          if (errMsg.includes('e-mail') || errMsg.includes('login')) {
+            goTo(2);
+            if (errMsg.includes('e-mail')) markErr('email', json.error, 'err-email');
+            if (errMsg.includes('login'))  markErr('login-name', json.error, 'err-login-name');
+          }
+        }
+      } catch (_) {
+        showApiError('Erro de conexão com o servidor. Verifique se o backend está rodando.');
+      } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
-
-        /* Mostra tela de sucesso */
-        for (let i = 1; i <= TOTAL_STEPS; i++) $('step-'+i).classList.remove('active');
-        $('progress-bar').style.display = 'none';
-        $('footer-link').style.display  = 'none';
-        $('success-name').textContent   = account.name.split(' ')[0];
-        $('success-screen').classList.add('visible');
-      }, 1000);
+      }
     });
   </script>
 </body>

@@ -1,351 +1,70 @@
 /**
- * movies.js — CineClube
+ * movies.js — RentFlix
+ *
+ * ANTES: array estático MOVIES exportado globalmente.
+ * AGORA: carrega os filmes da API Flask (/api/filmes)
+ *        e expõe a mesma interface que o app.js espera.
+ *
+ * Expõe globalmente:
+ *   - MOVIES          : array de filmes (preenchido após fetch)
+ *   - moviesReady     : Promise que resolve quando MOVIES estiver pronto
+ *   - reloadMovies(params) : recarrega com filtros opcionais
  */
 
-const MOVIES = [
+//const API_BASE = 'http://localhost:5000'; // ajuste se o backend rodar em outra porta
 
-  // ── Christopher Nolan ──────────────────────────
-  {
-    title:    'Oppenheimer',
-    year:     2023,
-    rating:   8.5,
-    price:    'R$12,90',
-    genre:    'drama',
-    badge:    'hot',
-    poster:   './assets/posters/oppenheimer.png',
-    bg:       'linear-gradient(135deg, #1a1209, #5c4020)',
-    director: 'Christopher Nolan',
-    sinopse:  'A história do físico J. Robert Oppenheimer e de seu papel no Projeto Manhattan, que levou ao desenvolvimento das primeiras bombas nucleares durante a Segunda Guerra Mundial.',
-  },
-  {
-    title:    'Inception',
-    year:     2010,
-    rating:   8.8,
-    price:    'R$8,90',
-    genre:    'acao',
-    badge:    'hot',
-    poster:   './assets/posters/inception.png',
-    bg:       'linear-gradient(135deg, #16213e, #0f3460)',
-    director: 'Christopher Nolan',
-    sinopse:  'Dom Cobb é um ladrão especialista na arte de extrair segredos do subconsciente durante o estado de sonho. Uma viagem épica pela mente humana.',
-  },
-  {
-    title:    'Interestelar',
-    year:     2014,
-    rating:   8.6,
-    price:    'R$9,90',
-    genre:    'ficcao',
-    badge:    'hot',
-    poster:   './assets/posters/interstellar.png',
-    bg:       'linear-gradient(135deg, #0d1b2a, #1b4f72)',
-    director: 'Christopher Nolan',
-    sinopse:  'Um grupo de exploradores viaja por um buraco de minhoca no espaço na esperança de garantir a sobrevivência da humanidade.',
-  },
-  {
-    title:    'Batman: O Cavaleiro das Trevas',
-    year:     2008,
-    rating:   9.0,
-    price:    'R$8,90',
-    genre:    'acao',
-    badge:    'classic',
-    poster:   "./assets/posters/batman.png",
-    bg:       'linear-gradient(135deg, #0a0a0a, #1a1a2e)',
-    director: 'Christopher Nolan',
-    sinopse:  'Batman enfrenta o Coringa, um criminoso caótico e imprevisível que semeia o terror em Gotham City. Um dos maiores filmes de super-herói já feitos.',
-  },
+/** Array global de filmes — começa vazio, preenchido pelo fetch */
+let MOVIES = [];
 
-  // ── Denis Villeneuve ───────────────────────────
-  {
-    title:    'Duna',
-    year:     2021,
-    rating:   7.9,
-    price:    'R$10,90',
-    genre:    'ficcao',
-    badge:    'new',
-    poster:   './assets/posters/duna.png',
-    bg:       'linear-gradient(135deg, #000d1a, #003366)',
-    director: 'Denis Villeneuve',
-    sinopse:  'Paul Atreides deve viajar para o planeta mais perigoso do universo para garantir o futuro de sua família e povo.',
-  },
-  {
-    title:    'Arrival',
-    year:     2016,
-    rating:   7.9,
-    price:    'R$8,90',
-    genre:    'ficcao',
-    badge:    null,
-    poster:   "./assets/posters/arival.png",
-    bg:       'linear-gradient(135deg, #0a1a0a, #1a3a2a)',
-    director: 'Denis Villeneuve',
-    sinopse:  'Uma linguista é recrutada pelo exército para se comunicar com extraterrestres que pousaram na Terra, em uma corrida contra o tempo para decifrar sua linguagem.',
-  },
-  {
-    title:    'Blade Runner 2049',
-    year:     2017,
-    rating:   8.0,
-    price:    'R$8,90',
-    genre:    'ficcao',
-    badge:    null,
-    poster:   "./assets/posters/blade-runner.png",
-    bg:       'linear-gradient(135deg, #1a0d00, #3d1f00)',
-    director: 'Denis Villeneuve',
-    sinopse:  'Um jovem blade runner descobre um segredo que pode mergulhar o que resta da sociedade no caos, levando-o a buscar Rick Deckard, desaparecido há 30 anos.',
-  },
+/** Resolve quando os filmes estiverem carregados pela primeira vez */
+let _resolveReady;
+const moviesReady = new Promise(res => { _resolveReady = res; });
 
-  // ── Bong Joon-ho ───────────────────────────────
-  {
-    title:    'Parasitas',
-    year:     2019,
-    rating:   8.5,
-    price:    'R$9,90',
-    genre:    'drama',
-    badge:    'hot',
-    poster:   './assets/posters/parasitas.png',
-    bg:       'linear-gradient(135deg, #1a2a1a, #2d4a2d)',
-    director: 'Bong Joon-ho',
-    sinopse:  'A família Kim, toda desempregada, passa a fazer parte da vida da família Park, rica e ingênua. Uma obra-prima do cinema sul-coreano vencedora do Oscar.',
-  },
-  {
-    title:    'Memórias de um Assassino',
-    year:     2003,
-    rating:   8.1,
-    price:    'R$6,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   "./assets/posters/memorias.png",
-    bg:       'linear-gradient(135deg, #1a1a0a, #3a3a1a)',
-    director: 'Bong Joon-ho',
-    sinopse:  'Baseado nos primeiros crimes seriais da Coreia do Sul, dois detetives com métodos opostos investigam uma série de assassinatos brutais em uma cidade rural.',
-  },
-  {
-    title:    'O Expresso do Amanhã',
-    year:     2013,
-    rating:   7.1,
-    price:    'R$7,90',
-    genre:    'ficcao',
-    badge:    null,
-    poster:   "./assets/posters/expresso.png",
-    bg:       'linear-gradient(135deg, #0a0a1a, #1a1a3a)',
-    director: 'Bong Joon-ho',
-    sinopse:  'Após uma falha catastrófica no clima, os sobreviventes vivem em um trem que circula pelo globo, divididos em rígidas classes sociais.',
-  },
+/**
+ * Busca filmes da API e preenche o array MOVIES.
+ * @param {Object} params - Filtros opcionais: { genero, busca, diretor }
+ * @returns {Promise<Array>} - Array de filmes normalizado
+ */
+async function reloadMovies(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.genero)  qs.set('genero',  params.genero);
+  if (params.busca)   qs.set('busca',   params.busca);
+  if (params.diretor) qs.set('diretor', params.diretor);
 
-  // ── Stanley Kubrick ────────────────────────────
-  {
-    title:    'O Iluminado',
-    year:     1980,
-    rating:   8.4,
-    price:    'R$5,90',
-    genre:    'terror',
-    badge:    'classic',
-    poster:   './assets/posters/o-iluminado.png',
-    bg:       'linear-gradient(135deg, #1a0000, #800000)',
-    director: 'Stanley Kubrick',
-    sinopse:  'Jack Torrance aceita um emprego de zelador de inverno em um hotel remoto e isolado, onde sua sanidade começa a deteriorar sob influências sobrenaturais.',
-  },
-  {
-    title:    '2001: Uma Odisseia no Espaço',
-    year:     1968,
-    rating:   8.3,
-    price:    'R$5,90',
-    genre:    'ficcao',
-    badge:    'classic',
-    poster:   "./assets/posters/odisseia.png",
-    bg:       'linear-gradient(135deg, #000010, #000040)',
-    director: 'Stanley Kubrick',
-    sinopse:  'Uma expedição espacial ao planeta Júpiter é colocada em risco pela IA HAL 9000. Um dos filmes mais influentes e visionários da história do cinema.',
-  },
-  {
-    title:    'Laranja Mecânica',
-    year:     1971,
-    rating:   8.3,
-    price:    'R$5,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   "./assets/posters/laranja-mecanica.png",
-    bg:       'linear-gradient(135deg, #1a0a00, #4a2000)',
-    director: 'Stanley Kubrick',
-    sinopse:  'Na Inglaterra futurista, o jovem delinquente Alex e sua gangue praticam violência, até que ele é capturado e submetido a um controverso tratamento de reabilitação.',
-  },
+  const url = `${API_BASE}/api/filmes${qs.toString() ? '?' + qs : ''}`;
 
-  // ── Jordan Peele ───────────────────────────────
-  {
-    title:    'Corra!',
-    year:     2017,
-    rating:   7.7,
-    price:    'R$7,90',
-    genre:    'terror',
-    badge:    null,
-    poster:   './assets/posters/corra.png',
-    bg:       'linear-gradient(135deg, #0d0d0d, #2d2d2d)',
-    director: 'Jordan Peele',
-    sinopse:  'Um jovem afro-americano visita os pais da namorada branca e descobre uma conspiração perturbadora que revela os horrores do racismo.',
-  },
-  {
-    title:    'Nós',
-    year:     2019,
-    rating:   6.8,
-    price:    'R$7,90',
-    genre:    'terror',
-    badge:    null,
-    poster:   "./assets/posters/nos.png",
-    bg:       'linear-gradient(135deg, #1a0000, #3a0000)',
-    director: 'Jordan Peele',
-    sinopse:  'Uma família em férias é aterrorizada por seus próprios doppelgängers — versões sombrias e violentas de si mesmos que surgem na escuridão.',
-  },
+  try {
+    const res  = await fetch(url, { credentials: 'include' });
+    const json = await res.json();
 
-  // ── Francis Ford Coppola ───────────────────────
-  {
-    title:    'O Poderoso Chefão',
-    year:     1972,
-    rating:   9.2,
-    price:    'R$7,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   './assets/posters/o-poderoso-chefao.png',
-    bg:       'linear-gradient(135deg, #1a0a2e, #3d1a6e)',
-    director: 'Francis Ford Coppola',
-    sinopse:  'A história épica da família Corleone, uma das mais poderosas organizações criminosas dos Estados Unidos. Um dos maiores filmes de todos os tempos.',
-  },
-  {
-    title:    'O Poderoso Chefão II',
-    year:     1974,
-    rating:   9.0,
-    price:    'R$7,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   "./assets/posters/o-poderoso-chefao-2.png",
-    bg:       'linear-gradient(135deg, #0a0a1e, #2a1a4e)',
-    director: 'Francis Ford Coppola',
-    sinopse:  'A continuação narra a ascensão de Michael Corleone ao poder, intercalada com a história da juventude de seu pai Vito. Uma das melhores sequências do cinema.',
-  },
-  {
-    title:    'Apocalypse Now',
-    year:     1979,
-    rating:   8.4,
-    price:    'R$6,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   "./assets/posters/apocalypse-now.png",
-    bg:       'linear-gradient(135deg, #1a0800, #4a2000)',
-    director: 'Francis Ford Coppola',
-    sinopse:  'Durante a Guerra do Vietnã, o Capitão Willard é enviado em uma missão secreta selva adentro para eliminar o Coronel Kurtz, que enlouqueceu e fundou seu próprio reino.',
-  },
+    if (!json.ok) throw new Error(json.error || 'Erro ao carregar filmes');
 
-  // ── Alfonso Cuarón ─────────────────────────────
-  {
-    title:    'Gravity',
-    year:     2013,
-    rating:   7.7,
-    price:    'R$7,90',
-    genre:    'ficcao',
-    badge:    null,
-    poster:   './assets/posters/gravity.png',
-    bg:       'linear-gradient(135deg, #0f2027, #2c5364)',
-    director: 'Alfonso Cuarón',
-    sinopse:  'Após um desastre, uma médica astronauta fica à deriva no espaço sem nenhuma forma de entrar em contato com a Terra.',
-  },
-  {
-    title:    'Roma',
-    year:     2018,
-    rating:   7.7,
-    price:    'R$7,90',
-    genre:    'drama',
-    badge:    null,
-    poster:   "./assets/posters/roma.png",
-    bg:       'linear-gradient(135deg, #1a1a1a, #383838)',
-    director: 'Alfonso Cuarón',
-    sinopse:  'Na Cidade do México dos anos 70, Cleo, uma empregada doméstica indígena, navega pelas dificuldades da vida enquanto cuida de uma família em crise.',
-  },
+    // Normaliza os campos para manter compatibilidade com o app.js existente
+    MOVIES = json.data.map(f => ({
+      id:       f.id_filme,
+      title:    f.titulo,
+      year:     f.ano_lancamento,
+      rating:   f.rating   || 0,          // campo extra — não está no SQL atual
+      price:    f.price,                  // ex: "R$9,90" — gerado no backend
+      genre:    f.genero,                 // slug: 'acao', 'drama' …
+      badge:    f.badge    || null,
+      poster:   f.poster   || null,
+      bg:       f.bg       || 'linear-gradient(135deg, #1a1a2e, #16213e)',
+      director: f.diretor  || '',
+      sinopse:  f.sinopse  || '',
+      visivel:  f.visivel,
+    }));
 
-  // ── Guillermo del Toro ─────────────────────────
-  {
-    title:    'A Forma da Água',
-    year:     2017,
-    rating:   7.3,
-    price:    'R$7,90',
-    genre:    'drama',
-    badge:    null,
-    poster:   './assets/posters/a-forma-da-água.png',
-    bg:       'linear-gradient(135deg, #00202a, #004a60)',
-    director: 'Guillermo del Toro',
-    sinopse:  'Durante a Guerra Fria, uma faxineira muda num laboratório secreto do governo forma um relacionamento único com uma criatura anfíbia capturada.',
-  },
-  {
-    title:    'O Labirinto do Fauno',
-    year:     2006,
-    rating:   8.2,
-    price:    'R$6,90',
-    genre:    'drama',
-    badge:    'classic',
-    poster:   "./assets/posters/fauno.png",
-    bg:       'linear-gradient(135deg, #0a1a00, #1a3a00)',
-    director: 'Guillermo del Toro',
-    sinopse:  'Na Espanha pós-guerra civil, uma menina descobre um mundo mágico e sombrio habitado por criaturas fantásticas, enquanto foge da brutalidade do padrasto fascista.',
-  },
+    return MOVIES;
+  } catch (err) {
+    console.error('[movies.js] Falha ao carregar filmes:', err);
+    MOVIES = [];
+    return [];
+  }
+}
 
-  // ── Pete Docter ────────────────────────────────
-  {
-    title:    'Up — Altas Aventuras',
-    year:     2009,
-    rating:   8.2,
-    price:    'R$6,90',
-    genre:    'animacao',
-    badge:    'classic',
-    poster:   './assets/posters/up.png',
-    bg:       'linear-gradient(135deg, #003080, #0070d0)',
-    director: 'Pete Docter',
-    sinopse:  'Um idoso solitário une-se a um escoteiro curioso em uma extraordinária jornada voadora até as cataratas mais altas do mundo.',
-  },
-  {
-    title:    'Soul',
-    year:     2020,
-    rating:   8.0,
-    price:    'R$8,90',
-    genre:    'animacao',
-    badge:    'new',
-    poster:   "./assets/posters/soul.png",
-    bg:       'linear-gradient(135deg, #001a33, #003366)',
-    director: 'Pete Docter',
-    sinopse:  'Um músico de jazz que sonha em se apresentar no palco tem sua alma separada do corpo às vésperas do maior show de sua vida.',
-  },
-  {
-    title:    'Divertida Mente',
-    year:     2015,
-    rating:   8.1,
-    price:    'R$7,90',
-    genre:    'animacao',
-    badge:    'classic',
-    poster:   "./assets/posters/divertidamente.png",
-    bg:       'linear-gradient(135deg, #1a003a, #3a006a)',
-    director: 'Pete Docter',
-    sinopse:  'Dentro da mente de uma garota de 11 anos, cinco emoções personificadas lutam para guiá-la durante uma grande mudança de vida.',
-  },
-
-  // ── Lilly e Lana Wachowski ─────────────────────
-  {
-    title:    'Matrix',
-    year:     1999,
-    rating:   8.7,
-    price:    'R$6,90',
-    genre:    'ficcao',
-    badge:    'classic',
-    poster:   './assets/posters/matrix.png',
-    bg:       'linear-gradient(135deg, #0a1628, #1e3a5f)',
-    director: 'Lilly e Lana Wachowski',
-    sinopse:  'Neo descobre que a realidade é uma simulação computacional e se une a rebeldes para lutar contra as máquinas que escravizam a humanidade.',
-  },
-  {
-    title:    'Matrix Reloaded',
-    year:     2003,
-    rating:   7.2,
-    price:    'R$5,90',
-    genre:    'ficcao',
-    badge:    'classic',
-    poster:   "./assets/posters/matrix-reloaded.png",
-    bg:       'linear-gradient(135deg, #051a05, #0a3a0a)',
-    director: 'Lilly e Lana Wachowski',
-    sinopse:  'Neo e os rebeldes continuam sua luta contra as máquinas enquanto descobrem mais sobre a verdade por trás da Matrix e seu próprio destino.',
-  },
-
-];
+// ── Carregamento inicial ao incluir o script ──────────
+(async () => {
+  await reloadMovies();
+  _resolveReady(MOVIES);
+})();
