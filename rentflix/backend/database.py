@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Um engine SQLModel é o que mantém as conexões com o banco de dados
+# Somente um objeto engine para todo o código se conectar com o memsmo banco de dados
 engine = create_engine(os.getenv("DATABASE_URL"))
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
