@@ -1,4 +1,3 @@
-
 const carrinho = [];
 
 const API = "http://127.0.0.1:8000";
@@ -35,7 +34,12 @@ function adicionarCarrinho(id) {
   const carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
   if (carrinho.includes(id)) {
-    alert("Este filme já está no seu carrinho!");
+    Swal.fire({
+      icon: "info",
+      title: "Já no carrinho",
+      text: "Este filme já está no seu carrinho!",
+      confirmButtonColor: "#c9a000"
+    });
     return;
   }
 

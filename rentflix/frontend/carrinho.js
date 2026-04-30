@@ -2,19 +2,23 @@ const API = "http://127.0.0.1:8000";
 let filmes = [];
 const carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 
+// Função de Carregamento de Filmes
+// Utiliza o método global "fetch()" que fornece uma maneira fácil para buscar recursos de forma assíncrona através da rede
 async function carregarFilmes() {
   const res = await fetch(`${API}/filmes`);
   filmes = await res.json();
 }
 
+// Função para Salvar o Carrinho
+// Usa-se localStorage uma vez que queremos salvar os dados sem que eles expirem ao atualizar a página
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
 }
 
 function carregarCarrinho() {
-  const lista = document.getElementById("lista-carrinho");
-  const vazio = document.getElementById("carrinho-vazio");
-  const resumo = document.getElementById("resumo-carrinho");
+  const lista   = document.getElementById("lista-carrinho");
+  const vazio   = document.getElementById("carrinho-vazio");
+  const resumo  = document.getElementById("resumo-carrinho");
 
   if (carrinho.length === 0) {
     vazio.style.display = "flex";
@@ -54,11 +58,22 @@ function removerFilme(id) {
 function finalizarAluguel() {
   const usuarioLogado = localStorage.getItem("usuarioLogado");
   if (!usuarioLogado) {
-    alert("Você precisa estar logado para finalizar o aluguel!");
-    window.location.href = "login.html";
+    Swal.fire({
+      icon: "warning",
+      title: "Não autenticado",
+      text: "Você precisa estar logado para finalizar o aluguel!",
+      confirmButtonColor: "#c9a000"
+    }).then(() => {
+      window.location.href = "login.html";
+    });
     return;
   }
-  alert("Aluguel finalizado com sucesso!");
+  Swal.fire({
+    icon: "success",
+    title: "Aluguel finalizado!",
+    text: "Seu aluguel foi realizado com sucesso.",
+    confirmButtonColor: "#c9a000"
+  });
 }
 
 async function init() {

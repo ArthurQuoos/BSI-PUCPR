@@ -21,6 +21,7 @@ async function fazerLogin() {
       return;
     }
 
+    // Entende qual usuário efetuou o login e redireciona para a devida página
     localStorage.setItem("usuarioLogado", data.nome);
     localStorage.setItem("tipoUsuario", data.tipo);
     if (data.tipo === "administrador") {
@@ -29,6 +30,11 @@ async function fazerLogin() {
          window.location.href = "index.html";
     }
   } catch (e) {
-    erro.textContent = "Erro ao conectar com o servidor.";
+    await Swal.fire({
+      icon: "error",
+      title: "Erro de conexão",
+      text: "Não foi possível conectar com o servidor.",
+      confirmButtonColor: "#c9a000"
+    });
   }
 }

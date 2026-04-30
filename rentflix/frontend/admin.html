@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RentFlix - Administrador</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
@@ -44,20 +45,48 @@
 
       <section id="secao-filmes" style="display:none">
         <h2 class="titulo-secao">Filmes cadastrados</h2>
-        <div class="form-admin">
-          <h3 class="titulo-form">Adicionar novo filme</h3>
-          <div class="campos-form">
+      <div class="form-admin">
+        <h3 class="titulo-form">Adicionar novo filme</h3>
+        <div class="campos-form">
+
+          <div class="grupo-input">
+            <p class="campos-cadastro">Título</p>
             <input type="text" id="novo-titulo" placeholder="Título">
-            <input type="number" id="novo-ano" placeholder="Ano de lançamento">
-            <input type="number" id="novo-preco" placeholder="Preço por dia" step="0.01">
+          </div>
+
+          <div class="grupo-input">
+            <p class="campos-cadastro">Ano</p>
+            <input type="number" id="novo-ano" placeholder="Ano">
+          </div>
+
+          <div class="grupo-input">
+            <p class="campos-cadastro">Preço (R$)</p>
+              <div class="seletor-preco">
+              <input type="number" id="novo-preco" value="0.00" step="0.01" min="0">
+              <div class="botoes-coluna">
+                <button type="button" onclick="ajustarPreco(0.10)">+</button>
+                <button type="button" onclick="ajustarPreco(-0.10)">-</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grupo-input">
+            <p class="campos-cadastro">Poster</p>
             <input type="text" id="novo-poster" placeholder="Link do poster">
+          </div>
+
+          <div class="grupo-input">
+            <p class="campos-cadastro">Gênero</p>
             <select id="novo-genero">
               <option value="">Selecione o gênero</option>
             </select>
-            <button class="btn-confirmar" onclick="adicionarFilme()">Adicionar filme</button>
           </div>
-          <span id="erro-filme" class="erro"></span>
+
+          <button class="btn-confirmar" onclick="adicionarFilme()">Adicionar filme</button>
         </div>
+        <span id="erro-filme" class="erro"></span>
+      </div>
+
         <table class="tabela-admin">
           <thead>
             <tr>
