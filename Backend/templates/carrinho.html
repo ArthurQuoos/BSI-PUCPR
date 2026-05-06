@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Carrinho</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav>
+      {% if usuario_nome %}
+        <span style="font-size:14px; color:#c9a000">Olá, {{ usuario_nome }}!</span>
+        {% if usuario_tipo == 'administrador' %}
+          <button onclick="window.location.href='/admin'">Admin</button>
+        {% endif %}
+        <button onclick="window.location.href='/locacoes'">Minhas Locações</button>
+        <button onclick="window.location.href='/sair'">Sair</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% else %}
+        <button onclick="window.location.href='/login'">Login</button>
+        <button onclick="window.location.href='/cadastro'">Cadastrar</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% endif %}
+    </nav>
+  </header>
+
+  <div class="pagina-carrinho">
+    <h2 class="titulo-carrinho">Meu Carrinho</h2>
+
+    {% if filmes %}
+      <div id="lista-carrinho">
+        {% for filme in filmes %}
+          <div class="item-carrinho">
+            <img src="{{ filme.poster }}" alt="{{ filme.titulo }}">
+            <div class="item-info">
+              <h3>{{ filme.titulo }}</h3>
+              <p>R$ {{ "%.2f"|format(filme.preco_diaria) }}/dia</p>
+            </div>
+            <form method="post" action="/carrinho/remover">
+              <input type="hidden" name="id_filme" value="{{ filme.id_filme }}">
+              <button class="btn-remover" type="submit">Remover</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div id="resumo-carrinho">
+        <div class="resumo-linha">
+          <span>Total de filmes:</span>
+          <span>{{ filmes|length }}</span>
+        </div>
+        <div class="resumo-linha">
+          <span>Valor total/dia:</span>
+          <span>R$ {{ "%.2f"|format(total) }}</span>
+        </div>
+        {% if usuario_nome %}
+          <a href="/carrinho/finalizar">
+            <button class="btn-confirmar">Finalizar aluguel</button>
+          </a>
+        {% else %}
+          <button class="btn-confirmar" onclick="avisarLogin()">Finalizar aluguel</button>
+        {% endif %}
+      </div>
+
+    {% else %}
+      <div id="carrinho-vazio">
+        <p>Seu carrinho está vazio.</p>
+        <button class="btn-confirmar" onclick="window.location.href='/'">Ver filmes</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function avisarLogin() {
+      Swal.fire({
+        icon: "warning",
+        title: "Atenção",
+        text: "Você precisa estar logado para finalizar o aluguel!",
+        confirmButtonColor: "#c9a000",
+        confirmButtonText: "Fazer login",
+        showCancelButton: true,
+        cancelButtonText: "Continuar navegando"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "/login";
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
