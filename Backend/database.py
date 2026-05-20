@@ -4,7 +4,7 @@ def get_connection():
     return pymysql.connect(
         host="localhost",
         user="root",
-        password="eric tan",
+        password="PUC@1234",
         database="rentflix",
         cursorclass=pymysql.cursors.DictCursor
     )

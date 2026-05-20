@@ -46,6 +46,15 @@ def index(request: Request):
     filmes = [dict(f) for f in cursor.fetchall()]
     cursor.execute("SELECT * FROM Genero")
     generos = [dict(g) for g in cursor.fetchall()]
+
+    usuario_id = request.cookies.get("usuario_id")
+    avatar = None
+    if usuario_id:
+        cursor.execute("SELECT avatar FROM Usuario WHERE id_usuario=%s", (usuario_id,))
+        usuario = cursor.fetchone()
+        if usuario and usuario["avatar"]:
+            avatar = usuario["avatar"]
+
     conn.close()
 
     carrinho = json.loads(request.cookies.get("carrinho", "[]"))
@@ -56,7 +65,8 @@ def index(request: Request):
         "usuario_nome": request.cookies.get("usuario_nome"),
         "usuario_tipo": request.cookies.get("usuario_tipo"),
         "carrinho": carrinho,
-        "qtd_carrinho": len(carrinho)
+        "qtd_carrinho": len(carrinho),
+        "avatar": avatar
     }))
     return renovar_sessao(response, request)
 
@@ -95,7 +105,8 @@ def sair():
 
 @app.get("/cadastro", response_class=HTMLResponse)
 def cadastro_page(request: Request):
-    return HTMLResponse(render("cadastro.html", {"erro": None}))
+    response = HTMLResponse(render("cadastro.html", {"erro": None}))
+    return renovar_sessao(response, request)
 
 @app.post("/cadastro", response_class=HTMLResponse)
 def cadastrar(
@@ -220,7 +231,7 @@ def admin_page(request: Request):
     locacoes = [dict(l) for l in cursor.fetchall()]
     conn.close()
 
-    return HTMLResponse(render("admin.html", {
+    response = HTMLResponse(render("admin.html", {
         "usuarios": usuarios,
         "filmes": filmes,
         "generos": generos,
@@ -228,6 +239,7 @@ def admin_page(request: Request):
         "usuario_nome": request.cookies.get("usuario_nome"),
         "usuario_tipo": request.cookies.get("usuario_tipo")
     }))
+    return renovar_sessao(response, request)
 
 @app.post("/admin/excluir-usuario")
 def excluir_usuario(request: Request, id_usuario: int = Form(...)):
@@ -238,7 +250,8 @@ def excluir_usuario(request: Request, id_usuario: int = Form(...)):
     cursor.execute("DELETE FROM Usuario WHERE id_usuario = %s", (id_usuario,))
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin", status_code=303)
+    response = RedirectResponse("/admin", status_code=303)
+    return renovar_sessao(response, request)
 
 @app.post("/admin/editar-usuario")
 def editar_usuario(
@@ -257,7 +270,6 @@ def editar_usuario(
         return RedirectResponse("/", status_code=303)
     conn = get_connection()
     cursor = conn.cursor()
-
     if senha:
         cursor.execute("""
             UPDATE Usuario SET nome=%s, email=%s, cpf=%s, telefone=%s, login=%s, data_nascimento=%s, senha=%s, Tipo=%s
@@ -268,10 +280,10 @@ def editar_usuario(
             UPDATE Usuario SET nome=%s, email=%s, cpf=%s, telefone=%s, login=%s, data_nascimento=%s, Tipo=%s
             WHERE id_usuario=%s
         """, (nome, email, cpf, telefone, login, data_nascimento, tipo, id_usuario))
-
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin", status_code=303)
+    response = RedirectResponse("/admin", status_code=303)
+    return renovar_sessao(response, request)
 
 @app.post("/admin/adicionar-filme")
 def adicionar_filme(
@@ -292,7 +304,8 @@ def adicionar_filme(
     """, (titulo, ano_lancamento, preco_diaria, poster, fk_Genero_id_genero))
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin?secao=filmes", status_code=303)
+    response = RedirectResponse("/admin?secao=filmes", status_code=303)
+    return renovar_sessao(response, request)
 
 @app.post("/admin/excluir-filme")
 def excluir_filme(request: Request, id_filme: int = Form(...)):
@@ -303,7 +316,8 @@ def excluir_filme(request: Request, id_filme: int = Form(...)):
     cursor.execute("DELETE FROM Filme WHERE id_filme = %s", (id_filme,))
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin?secao=filmes", status_code=303)
+    response = RedirectResponse("/admin?secao=filmes", status_code=303)
+    return renovar_sessao(response, request)
 
 @app.post("/admin/editar-filme")
 def editar_filme(
@@ -325,14 +339,12 @@ def editar_filme(
     """, (titulo, ano_lancamento, preco, poster, fk_Genero_id_genero, id_filme))
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin?secao=filmes", status_code=303)
+    response = RedirectResponse("/admin?secao=filmes", status_code=303)
+    return renovar_sessao(response, request)
 
 
 @app.post("/admin/adicionar-genero")
-def adicionar_genero(
-    request: Request,
-    nome_genero: str = Form(...)
-):
+def adicionar_genero(request: Request, nome_genero: str = Form(...)):
     if request.cookies.get("usuario_tipo") != "administrador":
         return RedirectResponse("/", status_code=303)
     conn = get_connection()
@@ -340,7 +352,8 @@ def adicionar_genero(
     cursor.execute("INSERT INTO Genero (nome_genero) VALUES (%s)", (nome_genero,))
     conn.commit()
     conn.close()
-    return RedirectResponse("/admin?secao=filmes", status_code=303)
+    response = RedirectResponse("/admin?secao=filmes", status_code=303)
+    return renovar_sessao(response, request)
 
 @app.get("/carrinho/finalizar", response_class=HTMLResponse)
 def finalizar_page(request: Request):
@@ -362,13 +375,14 @@ def finalizar_page(request: Request):
 
     total = sum(float(f["preco_diaria"]) for f in filmes)
 
-    return HTMLResponse(render("finalizar.html", {
+    response = HTMLResponse(render("finalizar.html", {
         "filmes": filmes,
         "total": total,
         "usuario_nome": request.cookies.get("usuario_nome"),
         "usuario_tipo": request.cookies.get("usuario_tipo"),
         "erro": None
     }))
+    return renovar_sessao(response, request)
 
 @app.post("/carrinho/finalizar")
 async def finalizar_carrinho(request: Request):
@@ -447,8 +461,42 @@ def locacoes_page(request: Request):
     locacoes = [dict(l) for l in cursor.fetchall()]
     conn.close()
 
-    return HTMLResponse(render("locacoes.html", {
+    response = HTMLResponse(render("locacoes.html", {
         "locacoes": locacoes,
         "usuario_nome": request.cookies.get("usuario_nome"),
         "usuario_tipo": request.cookies.get("usuario_tipo")
     }))
+    return renovar_sessao(response, request)
+
+@app.post("/salvar-avatar")
+async def salvar_avatar(request: Request):
+    import base64
+    usuario_id = request.cookies.get("usuario_id")
+    if not usuario_id:
+        return RedirectResponse("/login", status_code=303)
+
+    form = await request.form()
+    arquivo = form.get("avatar")
+
+    if not arquivo:
+        return RedirectResponse("/", status_code=303)
+
+    conteudo = await arquivo.read()
+    base64_img = base64.b64encode(conteudo).decode("utf-8")
+    tipo = arquivo.content_type
+    avatar_data = f"data:{tipo};base64,{base64_img}"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE Usuario SET avatar=%s WHERE id_usuario=%s", (avatar_data, usuario_id))
+    conn.commit()
+    conn.close()
+
+    response = RedirectResponse("/", status_code=303)
+    return response
+
+@app.post("/renovar-sessao")
+def renovar_sessao_route(request: Request):
+    from fastapi.responses import JSONResponse
+    response = JSONResponse({"status": "ok"})
+    return renovar_sessao(response, request)
