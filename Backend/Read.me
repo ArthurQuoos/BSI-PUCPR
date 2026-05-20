@@ -25,3 +25,6 @@ SET FOREIGN_KEY_CHECKS=1;
 
 USE rentflix;
 DELETE FROM Locacao WHERE id_locacao > 0 AND status = 'carrinho';
+
+USE rentflix;
+ALTER TABLE Usuario ADD COLUMN avatar LONGTEXT;
