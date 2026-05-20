@@ -324,21 +324,19 @@ if (telEditar) {
   });
 }
 
-function trocarAvatar(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    localStorage.setItem("avatarUsuario", e.target.result);
-    const img = document.getElementById("avatar-img");
-    if (img) img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+
+function toggleMenu() {
+  document.getElementById("menu-mobile").classList.toggle("ativo");
 }
 
-// Carrega avatar salvo
-const avatarImg = document.getElementById("avatar-img");
-if (avatarImg) {
-  const avatarSalvo = localStorage.getItem("avatarUsuario");
-  if (avatarSalvo) avatarImg.src = avatarSalvo;
+document.addEventListener("click", function(e) {
+  const menu = document.getElementById("menu-mobile");
+  const btn = document.querySelector(".btn-hamburger");
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove("ativo");
+  }
+});
+
+function renovarSessao() {
+  fetch("/renovar-sessao", { method: "POST" }).catch(() => {});
 }
