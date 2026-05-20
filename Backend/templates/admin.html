@@ -19,9 +19,9 @@
 
   <div class="pagina-admin">
     <div class="menu-admin">
-      <button class="btn-menu ativo" onclick="mostrarSecao('usuarios', this)">Usuários</button>
-      <button class="btn-menu" onclick="mostrarSecao('filmes', this)">Filmes</button>
-      <button class="btn-menu" onclick="mostrarSecao('locacoes', this)">Locações</button>
+      <button class="btn-menu ativo" onclick="mostrarSecao('usuarios', this); renovarSessao()">Usuários</button>
+      <button class="btn-menu" onclick="mostrarSecao('filmes', this); renovarSessao()">Filmes</button>
+      <button class="btn-menu" onclick="mostrarSecao('locacoes', this); renovarSessao()">Locações</button>
     </div>
 
     <div class="conteudo-admin">
