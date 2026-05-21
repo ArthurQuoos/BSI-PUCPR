@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Login</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav>
+      <button onclick="window.location.href='/'">Voltar</button>
+    </nav>
+  </header>
+
+  <div class="pagina-cadastro">
+    <div class="form-cadastro">
+      <h2>Entrar</h2>
+
+      {% if erro %}
+        <span class="erro">{{ erro }}</span>
+      {% endif %}
+
+      <form method="post" action="/login">
+        <input type="text" name="login" placeholder="Login" required>
+        <div style="position:relative">
+          <input type="password" id="senha" name="senha" placeholder="Senha" required style="padding-right:40px">
+          <button type="button" onclick="toggleSenha()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#c9a000; font-size:16px">👁</button>
+        </div>
+        <button class="btn-confirmar" type="submit">Entrar</button>
+      </form>
+
+      <p style="text-align:center; font-size:13px; color:#888">
+        Não tem conta?
+        <a href="/cadastro" style="color:#c9a000">Cadastre-se</a>
+      </p>
+    </div>
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+</html>

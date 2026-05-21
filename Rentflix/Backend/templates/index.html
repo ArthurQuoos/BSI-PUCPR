@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <header>
+  <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+  
+  <nav id="nav-desktop">
+    {% if usuario_nome %}
+      <div class="avatar-container">
+        <form method="post" action="/salvar-avatar" enctype="multipart/form-data" id="form-avatar">
+          <label for="input-avatar" style="cursor:pointer">
+            {% if avatar %}
+              <img id="avatar-img" src="{{ avatar }}" alt="Avatar">
+            {% else %}
+              <img id="avatar-img" src="https://ui-avatars.com/api/?background=c9a000&color=fff&name={{ usuario_nome }}" alt="Avatar">
+            {% endif %}
+            <span class="avatar-edit">✎</span>
+          </label>
+          <input type="file" id="input-avatar" name="avatar" accept="image/*" style="display:none" onchange="document.getElementById('form-avatar').submit()">
+        </form>
+      </div>
+      <span style="font-size:14px; color:#c9a000">Olá, {{ usuario_nome }}!</span>
+      {% if usuario_tipo == 'administrador' %}
+        <button onclick="window.location.href='/admin'">Admin</button>
+      {% endif %}
+      <button onclick="window.location.href='/locacoes'">Minhas Locações</button>
+      <button onclick="window.location.href='/sair'">Sair</button>
+      <button onclick="window.location.href='/carrinho'">🛒 {{ qtd_carrinho }}</button>
+    {% else %}
+      <button onclick="window.location.href='/login'">Login</button>
+      <button onclick="window.location.href='/cadastro'">Cadastrar</button>
+      <button onclick="window.location.href='/carrinho'">🛒 {{ qtd_carrinho }}</button>
+    {% endif %}
+  </nav>
+
+  <button class="btn-hamburger" onclick="toggleMenu()">&#9776;</button>
+
+  <div id="menu-mobile" class="menu-mobile">
+    {% if usuario_nome %}
+      <div class="menu-mobile-perfil">
+        {% if avatar %}
+          <img src="{{ avatar }}" alt="Avatar" class="menu-mobile-avatar">
+        {% else %}
+          <img src="https://ui-avatars.com/api/?background=c9a000&color=fff&name={{ usuario_nome }}" alt="Avatar" class="menu-mobile-avatar">
+        {% endif %}
+        <span>Olá, {{ usuario_nome }}!</span>
+      </div>
+      {% if usuario_tipo == 'administrador' %}
+        <button onclick="window.location.href='/admin'">Admin</button>
+      {% endif %}
+      <button onclick="window.location.href='/locacoes'">Minhas Locações</button>
+      <button onclick="window.location.href='/carrinho'">🛒 {{ qtd_carrinho }}</button>
+      <button onclick="window.location.href='/sair'">Sair</button>
+    {% else %}
+      <button onclick="window.location.href='/login'">Login</button>
+      <button onclick="window.location.href='/cadastro'">Cadastrar</button>
+      <button onclick="window.location.href='/carrinho'">🛒 {{ qtd_carrinho }}</button>
+    {% endif %}
+  </div>
+</header>
+
+  {% if filmes %}
+  <section id="destaque" style="background-image: url('{{ filmes[0].poster }}')">
+    <div id="destaque-info">
+      <h2>{{ filmes[0].titulo }}</h2>
+      <p>R$ {{ "%.2f"|format(filmes[0].preco_diaria) }}/dia</p>
+      {% if filmes[0].id_filme in carrinho %}
+        <button disabled style="background-color:#555">Adicionado ✓</button>
+      {% else %}
+        <form method="post" action="/carrinho/adicionar">
+          <input type="hidden" name="id_filme" value="{{ filmes[0].id_filme }}">
+          <button type="submit">Alugar</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="filtros">
+    <button class="btn-filtro ativo" onclick="filtrarGenero(null, this)">Todos</button>
+    {% for genero in generos %}
+      <button class="btn-filtro" data-id="{{ genero.id_genero }}" onclick="filtrarGenero(this.dataset.id, this)">{{ genero.nome_genero }}</button>
+    {% endfor %}
+  </div>
+
+  <main>
+    <h2 class="secao-titulo">Filmes disponíveis</h2>
+    <div id="filmes" class="grid-filmes">
+      {% for filme in filmes %}
+        <div class="card" id="card-{{ filme.id_filme }}" data-genero="{{ filme.fk_Genero_id_genero }}">
+          <img src="{{ filme.poster }}" alt="{{ filme.titulo }}">
+          <h3>{{ filme.titulo }}</h3>
+          <p>R$ {{ "%.2f"|format(filme.preco_diaria) }}/dia</p>
+          {% if filme.id_filme in carrinho %}
+            <button disabled style="background-color:#555">Adicionado ✓</button>
+          {% else %}
+            <form method="post" action="/carrinho/adicionar">
+              <input type="hidden" name="id_filme" value="{{ filme.id_filme }}">
+              <button type="submit">Alugar</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <script src="/static/script.js"></script>
+
+  {% if scroll_id %}
+  <script>
+    window.addEventListener("load", function() {
+      const card = document.getElementById("card-{{ scroll_id }}");
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

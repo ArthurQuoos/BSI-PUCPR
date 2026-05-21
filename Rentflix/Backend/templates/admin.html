@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Administrador</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav id="nav-desktop">
+      <span style="font-size:14px; color:#c9a000">Painel do Administrador</span>
+      <button onclick="window.location.href='/sair'">Sair</button>
+  </nav>
+    <button class="btn-hamburger" onclick="toggleMenu()">&#9776;</button>
+    <div id="menu-mobile" class="menu-mobile">
+      <div class="menu-mobile-perfil">
+        {% if avatar %}
+          <img src="{{ avatar }}" alt="Avatar" class="menu-mobile-avatar">
+        {% else %}
+          <img src="https://ui-avatars.com/api/?background=c9a000&color=fff&name={{ usuario_nome }}" alt="Avatar" class="menu-mobile-avatar">
+        {% endif %}
+        <span>Olá, {{ usuario_nome }}!</span>
+      </div>
+      <button onclick="window.location.href='/sair'">Sair</button>
+    </div>
+  </header>
+
+  <div class="pagina-admin">
+    <div class="menu-admin">
+      <button class="btn-menu ativo" onclick="mostrarSecao('usuarios', this); renovarSessao()">Usuários</button>
+      <button class="btn-menu" onclick="mostrarSecao('filmes', this); renovarSessao()">Filmes</button>
+      <button class="btn-menu" onclick="mostrarSecao('locacoes', this); renovarSessao()">Locações</button>
+    </div>
+
+    <div class="conteudo-admin">
+
+      <section id="secao-usuarios">
+        <h2 class="titulo-secao">Usuários cadastrados</h2>
+        <table class="tabela-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>CPF</th>
+              <th>Telefone</th>
+              <th>Login</th>
+              <th>Tipo</th>
+              <th>Nascimento</th>
+              <th>Cadastro</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+              <td>{{ usuario.id_usuario }}</td>
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>{{ usuario.cpf }}</td>
+              <td>{{ usuario.telefone }}</td>
+              <td>{{ usuario.login }}</td>
+              <td>{{ usuario.Tipo }}</td>
+              <td>{{ usuario.data_nascimento }}</td>
+              <td>{{ usuario.data_cadastro }}</td>
+              <td style="display:flex; gap:8px">
+                <button class="btn-excluir" onclick="abrirEditar(
+                  '{{ usuario.id_usuario }}',
+                  '{{ usuario.nome }}',
+                  '{{ usuario.email }}',
+                  '{{ usuario.cpf }}',
+                  '{{ usuario.telefone }}',
+                  '{{ usuario.login }}',
+                  '{{ usuario.data_nascimento }}',
+                  '{{ usuario.Tipo }}'
+                )">Editar</button>
+                <form method="post" action="/admin/excluir-usuario" onsubmit="return false">
+                  <input type="hidden" name="id_usuario" value="{{ usuario.id_usuario }}">
+                  <button class="btn-excluir" type="button" onclick="confirmarExclusaoUsuario(this.closest('form'))">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section id="secao-filmes" style="display:none">
+        <h2 class="titulo-secao">Filmes cadastrados</h2>
+        <div class="form-admin">
+            <h3 class="titulo-form">Adicionar novo gênero</h3>
+            <form method="post" action="/admin/adicionar-genero" style="display:flex; gap:10px; align-items:center">
+                <input type="text" name="nome_genero" placeholder="Nome do gênero" required style="background-color:#2a2a2a; border:1px solid #444; border-radius:4px; padding:10px 12px; color:#fff; font-size:14px; flex:1">
+                <button class="btn-confirmar" type="submit" style="width:auto; white-space:nowrap; padding:10px 20px">Adicionar gênero</button>
+            </form>
+        </div>
+        <div class="form-admin">
+          <h3 class="titulo-form">Adicionar novo filme</h3>
+          <form method="post" action="/admin/adicionar-filme">
+            <div class="campos-form">
+              <input type="text" name="titulo" placeholder="Título" required>
+              <input type="number" name="ano_lancamento" placeholder="Ano de lançamento" required>
+              <input type="number" name="preco_diaria" placeholder="Preço por dia" step="0.01" required>
+              <input type="text" name="poster" placeholder="Link do poster" required>
+              <select name="fk_Genero_id_genero" required>
+                <option value="">Selecione o gênero</option>
+                {% for genero in generos %}
+                  <option value="{{ genero.id_genero }}">{{ genero.nome_genero }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn-confirmar" type="submit">Adicionar filme</button>
+            </div>
+          </form>
+        </div>
+        <table class="tabela-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Ano</th>
+              <th>Preço/dia</th>
+              <th>Gênero</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for filme in filmes %}
+            <tr>
+              <td>{{ filme.id_filme }}</td>
+              <td>{{ filme.titulo }}</td>
+              <td>{{ filme.ano_lancamento }}</td>
+              <td>R$ {{ "%.2f"|format(filme.preco_diaria) }}</td>
+              <td>{{ filme.fk_Genero_id_genero }}</td>
+              <td style="display:flex; gap:8px">
+                <button class="btn-excluir" onclick="abrirEditarFilme(
+                  '{{ filme.id_filme }}',
+                  '{{ filme.titulo }}',
+                  '{{ filme.fk_Genero_id_genero }}',
+                  '{{ filme.poster }}',
+                  '{{ filme.ano_lancamento }}',
+                  '{{ filme.preco_diaria }}'
+                )">Editar</button>
+                <form method="post" action="/admin/excluir-filme" onsubmit="return false">
+                  <input type="hidden" name="id_filme" value="{{ filme.id_filme }}">
+                  <button class="btn-excluir" type="button" onclick="confirmarExclusaoFilme(this.closest('form'))">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section id="secao-locacoes" style="display:none">
+        <h2 class="titulo-secao">Locações realizadas</h2>
+        <table class="tabela-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuário</th>
+              <th>Filme</th>
+              <th>Data início</th>
+              <th>Data devolução</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for locacao in locacoes %}
+            <tr>
+              <td>{{ locacao.id_locacao }}</td>
+              <td>{{ locacao.fk_Usuario_id_usuario }}</td>
+              <td>{{ locacao.fk_Filme_id_filme }}</td>
+              <td>{{ locacao.data_inicio }}</td>
+              <td>{{ locacao.data_devolucao }}</td>
+              <td>{{ locacao.status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+    </div>
+  </div>
+
+
+
+  <!-- Modal editar usuário -->
+  <div id="modal-editar" class="modal">
+    <div class="modal-conteudo">
+      <button class="fechar" onclick="fecharEditar()">✕</button>
+      <h2>Editar usuário</h2>
+      <form method="post" action="/admin/editar-usuario" onsubmit="return validarEdicao(this)">
+        <input type="hidden" id="editar-id" name="id_usuario">
+        <input type="text" id="editar-nome" name="nome" placeholder="Nome completo">
+        <input type="email" id="editar-email" name="email" placeholder="E-mail">
+        <input type="text" id="editar-cpf" name="cpf" placeholder="CPF (000.000.000-00)" maxlength="14">
+        <input type="text" id="editar-telefone" name="telefone" placeholder="Telefone ((00) 00000-0000)" maxlength="15">
+        <input type="text" id="editar-login" name="login" placeholder="Login">
+        <input type="date" id="editar-nascimento" name="data_nascimento">
+        <div style="position:relative">
+          <input type="password" id="editar-senha" name="senha" placeholder="Nova senha (deixe vazio para não alterar)" style="padding-right:40px">
+          <button type="button" onclick="toggleSenhaAdmin()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#c9a000; font-size:16px">👁</button>
+        </div>
+        <select id="editar-tipo" name="tipo">
+          <option value="cliente">Cliente</option>
+          <option value="administrador">Administrador</option>
+        </select>
+        <button class="btn-confirmar" type="submit">Salvar</button>
+      </form>
+    </div>
+  </div>
+
+<!-- Modal editar filme -->
+<div id="modal-editar-filme" class="modal">
+  <div class="modal-conteudo">
+    <button class="fechar" onclick="fecharEditarFilme()">✕</button>
+    <h2>Editar filme</h2>
+    <form method="post" action="/admin/editar-filme">
+      <input type="hidden" id="editar-filme-id" name="id_filme">
+      <input type="text" id="editar-titulo" name="titulo" placeholder="Título do filme">
+      <input type="number" id="editar-ano-de-lancamento" name="ano_lancamento" placeholder="Ano de lançamento">
+      <input type="number" id="editar-preco" name="preco" placeholder="Preço" step="0.01">
+      <input type="text" id="editar-poster" name="poster" placeholder="URL do poster">
+      <select id="editar-genero" name="fk_Genero_id_genero">
+        {% for genero in generos %}
+          <option value="{{ genero.id_genero }}">{{ genero.nome_genero }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn-confirmar" type="submit">Salvar</button>
+    </form>
+  </div>
+</div>
+
+  <script src="/static/script.js"></script>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const secao = params.get("secao");
+    if (secao) {
+        const botao = document.querySelector(`.btn-menu[onclick*="${secao}"]`);
+        if (botao) mostrarSecao(secao, botao);
+    }
+  </script>
+</body>
+</html>

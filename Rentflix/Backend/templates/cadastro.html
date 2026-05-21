@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Cadastro</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav>
+      <button onclick="window.location.href='/'">Voltar</button>
+    </nav>
+  </header>
+
+  <div class="pagina-cadastro">
+    <div class="form-cadastro">
+      <h2>Criar conta</h2>
+      <p class="campos-obrigatorios">* Todos os campos são obrigatórios</p>
+
+      {% if erro %}
+        <span class="erro">{{ erro }}</span>
+      {% endif %}
+
+      <form method="post" action="/cadastro">
+        <input type="text" name="nome" placeholder="Nome completo" required>
+        <input type="email" name="email" placeholder="E-mail" required>
+        <input type="text" name="cpf" id="cpf" placeholder="CPF (000.000.000-00)" maxlength="14" required>
+        <input type="text" name="telefone" id="telefone" placeholder="Telefone ((00) 00000-0000)" maxlength="15" required>
+        <input type="text" name="login" placeholder="Login (mínimo 4 caracteres)" required>
+        <div style="position:relative">
+          <input type="password" id="senha" name="senha" placeholder="Senha" required style="padding-right:40px">
+          <button type="button" onclick="toggleSenhaCadastro()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#c9a000; font-size:16px">👁</button>
+        </div>
+        <div style="position:relative">
+          <input type="password" id="confirmar_senha" name="confirmar_senha" placeholder="Confirmar senha" required style="padding-right:40px">
+          <button type="button" onclick="toggleConfirmarSenha()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#c9a000; font-size:16px">👁</button>
+        </div>
+        <input type="date" name="data_nascimento" required>
+        <button class="btn-confirmar" type="submit">Cadastrar</button>
+      </form>
+
+      <p style="text-align:center; font-size:13px; color:#888">
+        Já tem conta?
+        <a href="/login" style="color:#c9a000">Entrar</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

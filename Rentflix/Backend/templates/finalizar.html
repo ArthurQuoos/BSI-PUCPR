@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Finalizar Aluguel</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav>
+      {% if usuario_nome %}
+        <span style="font-size:14px; color:#c9a000">Olá, {{ usuario_nome }}!</span>
+        <button onclick="window.location.href='/sair'">Sair</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% endif %}
+    </nav>
+  </header>
+
+  <div class="pagina-carrinho">
+    <h2 class="titulo-carrinho">Finalizar Aluguel</h2>
+
+    {% if erro %}
+      <div style="color:#e50914; margin-bottom:16px; font-size:14px">{{ erro }}</div>
+    {% endif %}
+
+    <form method="post" action="/carrinho/finalizar">
+      {% for filme in filmes %}
+        <div class="item-carrinho" style="flex-direction:column; align-items:flex-start; gap:12px">
+          <div style="display:flex; align-items:center; gap:16px; width:100%">
+            <img src="{{ filme.poster }}" alt="{{ filme.titulo }}">
+            <div class="item-info">
+              <h3>{{ filme.titulo }}</h3>
+              <p>R$ {{ "%.2f"|format(filme.preco_diaria) }}/dia</p>
+            </div>
+          </div>
+          <div style="width:100%">
+            <label style="font-size:13px; color:#888; display:block; margin-bottom:4px">Data de início</label>
+            <input type="date" name="data_inicio_{{ filme.id_filme }}" required
+              style="background-color:#2a2a2a; border:1px solid #444; border-radius:4px; padding:10px 12px; color:#fff; font-size:14px; width:100%">
+            <p style="font-size:12px; color:#888; margin-top:4px">A devolução será no dia seguinte.</p>
+          </div>
+          <input type="hidden" name="filmes" value="{{ filme.id_filme }}">
+        </div>
+      {% endfor %}
+
+      <div id="resumo-carrinho">
+        <div class="resumo-linha">
+          <span>Total de filmes:</span>
+          <span>{{ filmes|length }}</span>
+        </div>
+        <div class="resumo-linha">
+          <span>Valor total:</span>
+          <span>R$ {{ "%.2f"|format(total) }}</span>
+        </div>
+        <button class="btn-confirmar" type="submit">Confirmar aluguel</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

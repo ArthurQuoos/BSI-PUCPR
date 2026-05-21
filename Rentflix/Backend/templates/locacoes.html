@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentFlix - Minhas Locações</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <h1 onclick="window.location.href='/'" style="cursor:pointer">RentFlix</h1>
+    <nav id="nav-desktop">
+      {% if usuario_nome %}
+        <div class="avatar-container">
+          {% if avatar %}
+            <img id="avatar-img" src="{{ avatar }}" alt="Avatar">
+          {% else %}
+            <img id="avatar-img" src="https://ui-avatars.com/api/?background=c9a000&color=fff&name={{ usuario_nome }}" alt="Avatar">
+          {% endif %}
+        </div>
+        <span style="font-size:14px; color:#c9a000">Olá, {{ usuario_nome }}!</span>
+        {% if usuario_tipo == 'administrador' %}
+          <button onclick="window.location.href='/admin'">Admin</button>
+        {% endif %}
+        <button onclick="window.location.href='/locacoes'">Minhas Locações</button>
+        <button onclick="window.location.href='/sair'">Sair</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% else %}
+        <button onclick="window.location.href='/login'">Login</button>
+        <button onclick="window.location.href='/cadastro'">Cadastrar</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% endif %}
+    </nav>
+    <button class="btn-hamburger" onclick="toggleMenu()">&#9776;</button>
+    <div id="menu-mobile" class="menu-mobile">
+      {% if usuario_nome %}
+        <div class="menu-mobile-perfil">
+          {% if avatar %}
+            <img src="{{ avatar }}" alt="Avatar" class="menu-mobile-avatar">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?background=c9a000&color=fff&name={{ usuario_nome }}" alt="Avatar" class="menu-mobile-avatar">
+          {% endif %}
+          <span>Olá, {{ usuario_nome }}!</span>
+        </div>
+        {% if usuario_tipo == 'administrador' %}
+          <button onclick="window.location.href='/admin'">Admin</button>
+        {% endif %}
+        <button onclick="window.location.href='/locacoes'">Minhas Locações</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+        <button onclick="window.location.href='/sair'">Sair</button>
+      {% else %}
+        <button onclick="window.location.href='/login'">Login</button>
+        <button onclick="window.location.href='/cadastro'">Cadastrar</button>
+        <button onclick="window.location.href='/carrinho'">🛒</button>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="pagina-carrinho">
+    <h2 class="titulo-carrinho">Minhas Locações</h2>
+
+    {% if locacoes %}
+      {% for locacao in locacoes %}
+        <div class="item-carrinho">
+          <img src="{{ locacao.poster }}" alt="{{ locacao.titulo }}">
+          <div class="item-info">
+            <h3>{{ locacao.titulo }}</h3>
+            <p>R$ {{ "%.2f"|format(locacao.preco_diaria) }}/dia</p>
+            <p class="info-data">Início: {{ locacao.data_inicio }}</p>
+            <p class="info-data">Devolução: {{ locacao.data_devolucao }}</p>
+          </div>
+          {% if locacao.status == 'concluido' %}
+            <span class="status-concluido">{{ locacao.status }}</span>
+          {% else %}
+            <span class="status-pendente">{{ locacao.status }}</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div id="carrinho-vazio">
+        <p>Você ainda não tem nenhuma locação.</p>
+        <button class="btn-confirmar" onclick="window.location.href='/'">Ver filmes</button>
+      </div>
+    {% endif %}
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+</html>
